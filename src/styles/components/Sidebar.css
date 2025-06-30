@@ -1,0 +1,23 @@
+@import "../variables.css";
+
+.sidebar {
+  width: 260px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-files { flex: 1; overflow-y: auto; }
+.sidebar-bottom { border-top: 1px solid var(--border); padding: 1rem; }
+.logout-btn {
+  width: 100%; background:#ef4444; color:#fff; border:none;
+  padding:.6rem; border-radius:var(--radius); font-weight:600;
+  transition: background .3s;
+}
+.logout-btn:hover { background:#dc2626; }

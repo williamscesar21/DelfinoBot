@@ -1,0 +1,46 @@
+@import "../variables.css";
+
+.bubble {
+  max-width: 80%;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  position: relative; /* For positioning the badge */
+  margin-bottom: 10px; /* Space between bubbles */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+.bubble.user {
+  background: var(--bg-bubble-user);
+  align-self: flex-end;
+  border-top-right-radius: 0; /* Rounded corners for user bubbles */
+}
+
+.bubble.bot {
+  background: var(--bg-bubble-bot);
+  align-self: flex-start;
+  border-top-left-radius: 0; /* Rounded corners for bot bubbles */
+}
+
+/* Badge styles */
+.badge {
+  background: #8b94e6;
+  color: #ffffff;
+  font-size: 0.65rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+  margin-right: 6px;
+  display: inline-block; /* Ensure the badge is inline */
+  position: absolute; /* Positioning for better alignment */
+  top: -5px; /* Adjust position as needed */
+  left: 5px; /* Adjust position as needed */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+}
+
+/* Optional: Add hover effects for bubbles */
+.bubble:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Increase shadow on hover */
+  transition: box-shadow 0.2s ease; /* Smooth transition */
+}

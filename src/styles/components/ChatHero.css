@@ -1,0 +1,44 @@
+@import "../variables.css";
+
+.chat-hero {
+  padding: 3rem 1rem;
+  text-align: center;
+}
+
+.chat-hero h1 {
+  font-size: 1.75rem;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+}
+
+.chat-hero-input {
+  display: inline-flex;
+  align-items: center;
+  background: var(--bg-sidebar);
+  border-radius: 100px;
+  padding: 0.5rem 1rem;
+  max-width: 600px;
+  width: 80%;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.chat-hero-input input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  padding: 0.5rem;
+}
+
+.chat-hero-input input::placeholder {
+  color: var(--text-secondary);
+}
+
+.hero-bar {
+  width: 32px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 1px;
+  margin-left: 1rem;
+}

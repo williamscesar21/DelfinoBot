@@ -1,0 +1,32 @@
+@import "./variables.css";
+
+/* reset ---------------------------------------------------- */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  background: var(--bg-main);
+  color: var(--text-primary);
+}
+
+/* helpers -------------------------------------------------- */
+a { color: var(--accent); text-decoration: none; transition: color .3s; }
+a:hover { color: var(--accent-hover); }
+
+.app-layout { display: flex; height: 100%; }
+.main-panel { flex: 1; display: flex; flex-direction: column; height: 100%; }
+.hidden { display: none !important; }
+
+/* mensajes orden normal, scroll al fondo */
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;  /* ← normal */
+  padding: 1.5rem;
+  gap: 1rem;
+}

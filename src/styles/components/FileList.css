@@ -1,0 +1,55 @@
+.file-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.file-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 10px;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+  cursor: pointer;
+  margin-bottom: 10px;
+  margin-left: 10px;
+  background-color: var(--gray-100);
+  flex-wrap: wrap; 
+  word-break: break-word; 
+}
+
+.file-item:hover {
+  background: var(--gray-100);
+}
+
+.file-checkbox {
+  display: none;
+}
+
+.file-item.selected {
+  background: var(--indigo-50);
+  border-left: 4px solid var(--indigo-500);
+  margin-left: 15px;
+}
+
+.file-label {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.file-name {
+  margin-left: 10px;
+  color: var(--gray-800);
+  word-break: break-word;
+  white-space: normal; /* <-- permite múltiples líneas */
+  flex: 1; /* <-- para ocupar todo el ancho disponible */
+}
+
+.file-list-empty {
+  text-align: center;
+  color: var(--gray-500);
+  font-size: 14px;
+  margin-top: 20px;
+}

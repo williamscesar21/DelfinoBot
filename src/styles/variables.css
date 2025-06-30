@@ -1,0 +1,29 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+
+:root {
+  /* Colores base */
+  --bg-main: #fdfeff;           /* Azul noche profundo */
+  --bg-sidebar: #1e2029;        /* Azul oscuro matizado */
+  
+  /* Burbujas de chat */
+  --bg-bubble-user: #7b96ff;    /* Azul real satinado */
+  --bg-bubble-bot: #e0e4ff;     /* Gris azulado elegante */
+  
+  /* Texto */
+  --text-primary: #000000;      /* Blanco suave */
+  --text-secondary: #b8bbc4;    /* Gris perla */
+  
+  /* Acentos */
+  --accent: #4fd1a5;            /* Verde menta elegante */
+  --accent-hover: #3cb492;      /* Verde menta oscuro */
+  
+  /* Bordes */
+  --border: #3a3d4d;            /* Líneas sutiles */
+  
+  /* Efectos */
+  --radius: 8px;                /* Bordes redondeados */
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  
+  /* Degradados */
+  --gradient-accent: linear-gradient(135deg, #4fd1a5 0%, #3a5bc7 100%);
+}
