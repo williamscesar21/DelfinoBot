@@ -1,5 +1,5 @@
 import { useState } from "react";
-import "../styles/components/GroupedFileList.css";
+import "../styles/components/FileList.css";
 
 export type FileItem = {
   id: string;

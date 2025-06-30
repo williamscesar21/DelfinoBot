@@ -1,7 +1,7 @@
 // components/Sidebar.tsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import FileList, { FileItem } from "./GroupedFileList";
+import FileList, { FileItem } from "./FileList";
 import { useChatSlice } from "../store/chatSlice";
 import { useAuthSlice } from "../store/authSlice";
 import { api } from "../api/axios";

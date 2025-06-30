@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/axios";
 import { useChatSlice } from "../store/chatSlice";
-import FileList, { FileItem } from "./GroupedFileList";
+import FileList, { FileItem } from "./FileList";
 import "../styles/components/FileSidebar.css";
 
 export default function FileSidebar() {

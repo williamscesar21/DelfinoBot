@@ -53,19 +53,3 @@
   font-size: 14px;
   margin-top: 20px;
 }
-
-
-/* estilos básicos para la lista agrupada */
-.file-folder-btn {
-  display: block;
-  width: 100%;
-  border: 0;
-  background: transparent;
-  text-align: left;
-  padding: 4px 2px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.file-list-grouped > li {
-  margin-bottom: 4px;
-}
