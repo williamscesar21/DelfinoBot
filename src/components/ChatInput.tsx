@@ -1,4 +1,4 @@
-import { FormEvent, useState, useEffect } from "react";
+import { FormEvent, useState, useEffect, KeyboardEvent } from "react";
 import { useChatSlice } from "../store/chatSlice";
 import "../styles/components/ChatInput.css";
 
@@ -27,12 +27,24 @@ export default function ChatInput({ disabled, onSend }: Props) {
     }
   }, []);
 
+  const send = (msg: string) => {
+    onSend(msg);
+    setText("");
+  };
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const msg = text.trim();
     if (!msg) return;
-    onSend(msg);
-    setText("");
+    send(msg);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      const msg = text.trim();
+      if (msg && !disabled) send(msg);
+    }
   };
 
   return (
@@ -49,6 +61,7 @@ export default function ChatInput({ disabled, onSend }: Props) {
           className="chat-input-textarea"
           value={text}
           onChange={(e) => setText(e.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder="Escribe tu mensaje…"
           maxLength={1000}
           disabled={disabled}
