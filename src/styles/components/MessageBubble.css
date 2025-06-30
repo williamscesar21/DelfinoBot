@@ -7,40 +7,107 @@
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
-  position: relative; /* For positioning the badge */
-  margin-bottom: 10px; /* Space between bubbles */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+  position: relative;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .bubble.user {
   background: var(--bg-bubble-user);
   align-self: flex-end;
-  border-top-right-radius: 0; /* Rounded corners for user bubbles */
+  border-top-right-radius: 0;
 }
 
 .bubble.bot {
   background: var(--bg-bubble-bot);
   align-self: flex-start;
-  border-top-left-radius: 0; /* Rounded corners for bot bubbles */
+  border-top-left-radius: 0;
 }
 
-/* Badge styles */
-.badge {
+.bubble .badge {
+  position: absolute;
+  top: -5px;
+  left: 5px;
   background: #8b94e6;
-  color: #ffffff;
+  color: #fff;
   font-size: 0.65rem;
   padding: 2px 4px;
   border-radius: 4px;
-  margin-right: 6px;
-  display: inline-block; /* Ensure the badge is inline */
-  position: absolute; /* Positioning for better alignment */
-  top: -5px; /* Adjust position as needed */
-  left: 5px; /* Adjust position as needed */
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
-/* Optional: Add hover effects for bubbles */
 .bubble:hover {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Increase shadow on hover */
-  transition: box-shadow 0.2s ease; /* Smooth transition */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: box-shadow 0.2s ease;
+}
+
+/* Contenedor del contenido Markdown */
+.bubble-content {
+  color: var(--text-primary);
+}
+
+/* Encabezados */
+.bubble-content h1,
+.bubble-content h2,
+.bubble-content h3 {
+  margin: 0.75rem 0 0.5rem;
+  color: var(--accent);
+}
+
+/* Párrafos */
+.bubble-content p {
+  margin: 0.5rem 0;
+}
+
+/* Listas */
+.bubble-content ul,
+.bubble-content ol {
+  margin: 0.5rem 0 0.5rem 1.25rem;
+}
+
+/* Enlaces */
+.bubble-content a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+.bubble-content a:hover {
+  color: var(--accent-hover);
+}
+
+/* Código inline y bloques de código */
+.bubble-content code {
+  background: rgba(27,31,35,0.05);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: "Fira Code", monospace;
+  font-size: 0.95rem;
+}
+.bubble-content pre {
+  background: rgba(27,31,35,0.08);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+/* Tablas */
+.bubble-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.75rem 0;
+}
+.bubble-content th,
+.bubble-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+  text-align: left;
+}
+.bubble-content th {
+  background: rgba(255,255,255,0.05);
+}
+
+/* Imágenes */
+.bubble-content img {
+  max-width: 100%;
+  border-radius: var(--radius);
+  margin: 0.5rem 0;
 }
