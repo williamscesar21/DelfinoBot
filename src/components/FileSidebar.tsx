@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/axios";
 import { useChatSlice } from "../store/chatSlice";
-import FileList, { FileItem } from "./FileList";
+// import FileList, { FileItem } from "./FileList";
 import "../styles/components/FileSidebar.css";
+import TreeFileList, { FileItem } from "./TreeFileList";
 
 export default function FileSidebar() {
   /* estado global */
@@ -36,7 +37,7 @@ export default function FileSidebar() {
 
       {!loading && !error && (
         <nav className="file-sidebar-files">
-          <FileList files={files} selected={selectedFiles} onToggle={toggleFile} />
+          <TreeFileList files={files} selected={selectedFiles} onToggle={toggleFile} />
         </nav>
       )}
 
