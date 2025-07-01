@@ -11,7 +11,7 @@ import {
   PiMicrosoftExcelLogo as SiMicrosoftExcel,  //  ← Excel
 } from "react-icons/pi";
 
-import "./FancyFileTree.css";
+import "../styles/components/FancyFileTree.css";
 
 /* ---------- tipos ---------- */
 export interface FileItem {
