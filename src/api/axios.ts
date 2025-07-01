@@ -20,7 +20,7 @@ const getAuthCreds = () => {
 };
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api",
+  baseURL: import.meta.env.VITE_API_BASE_URL || "https://api-chatgpt-delfino.onrender.com/api",
   withCredentials: true,          // permite enviar cookies si las usaras
 });
 

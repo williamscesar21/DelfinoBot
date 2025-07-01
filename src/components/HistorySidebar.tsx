@@ -154,7 +154,7 @@ export default function HistorySidebar() {
         </div>
 
         {/* acciones inferiores */}
-        <div style={{ display: 'flex', gap: '8px', marginTop: 'auto' }}>
+        <div style={{ display: 'flex', gap: '8px', marginTop: 'auto', paddingTop: '12px' }}>
           <button className="hsb-new" onClick={newChat}>
             <Plus size={14} />
             {!collapsed && <span>New Chat</span>}

@@ -42,7 +42,7 @@ export default function FileSidebar() {
       )}
 
       {!selectedFiles.length && !loading && !error && (
-        <p className="file-sidebar-hint">
+        <p className="file-sidebar-hint" style={{textAlign: "center"}}>
           Sin archivos seleccionados — se consultarán <strong>todos</strong>.
         </p>
       )}
