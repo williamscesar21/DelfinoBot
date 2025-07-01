@@ -1,0 +1,65 @@
+:root {
+  --ft-bg         : #f9fafb;
+  --ft-row-hover  : #eff2f5;
+  --ft-sel-bg     : #d9eafe;
+  --ft-icon       : #64748b;
+  --ft-word       : #2b579a;
+  --ft-excel      : #217346;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ft-bg        : #111827;
+    --ft-row-hover : #1f2937;
+    --ft-sel-bg    : #1e40af;
+    --ft-icon      : #94a3b8;
+  }
+}
+
+/* --- estructura --- */
+.ft-root,
+.ft-children {
+  list-style: none;
+  margin: 0;
+  padding-left: 0.75rem;
+}
+
+/* --- fila genérica --- */
+.ft-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  user-select: none;
+  cursor: pointer;
+  background: transparent;
+}
+.ft-row:hover { background: var(--ft-row-hover); }
+
+/* --- carpeta --- */
+.ft-row.folder { font-weight: 600; }
+
+/* --- archivo --- */
+.ft-row.file input { margin-right: 4px; }
+.ft-row.file.sel   { background: var(--ft-sel-bg); }
+
+/* --- iconos --- */
+.ft-icon { color: var(--ft-icon); flex-shrink: 0; }
+.ft-icon.doc { color: var(--ft-word); }
+.ft-icon.xls { color: var(--ft-excel); }
+
+/* --- nombre con ellipsis --- */
+.ft-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --- animación de apertura --- */
+.ft-children {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s ease;
+}
+.ft-children.open { max-height: 1000px; }
