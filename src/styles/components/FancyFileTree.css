@@ -9,10 +9,10 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --ft-bg        : #111827;
-    --ft-row-hover : #1f2937;
-    --ft-sel-bg    : #1e40af;
-    --ft-icon      : #94a3b8;
+    --ft-bg        : #8b8e95;
+    --ft-row-hover : #8abbff;
+    --ft-sel-bg    : #c8d5ff;
+    --ft-icon      : #b5d4ff;
   }
 }
 
