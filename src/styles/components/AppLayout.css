@@ -153,7 +153,6 @@
   position: sticky;
   bottom: 0;
   background: #fff;
-  padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
   display: flex;
   gap: 8px;
 }
