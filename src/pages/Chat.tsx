@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Menu, Folder } from "lucide-react";
 import { useChatSlice } from "../store/chatSlice";
 import MessageBubble from "../components/MessageBubble";
 import Spinner from "../components/Spinner";
@@ -6,33 +7,49 @@ import HistorySidebar from "../components/HistorySidebar";
 import FileSidebar from "../components/FileSidebar";
 import ChatInput from "../components/ChatInput";
 import "../styles/components/Composer.css";
+import "../styles/components/AppLayout.css";   // ⟵ nuevo CSS global
 
 export default function Chat() {
-  const { conversations, currentId, sendMessage, loading } =
-    useChatSlice();
+  const { conversations, currentId, sendMessage, loading } = useChatSlice();
+  const [showHistory, setShowHistory] = useState(false);
+  const [showFiles,   setShowFiles]   = useState(false);
+
   const bottomRef = useRef<HTMLDivElement>(null);
-
-  // Conversación activa
   const activeConv = conversations.find((c) => c.id === currentId);
-  const messages = activeConv?.messages || [];
+  const messages   = activeConv?.messages || [];
 
-  // Auto-scroll al mensaje más reciente
+  /* Auto-scroll */
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  // Manejador para pasar a ChatInput
   const handleSend = async (text: string) => {
     await sendMessage(text);
   };
 
   return (
     <div className="app-layout">
-      {/* Sidebar de historial */}
-      <HistorySidebar />
+      {/* -------- Sidebars (se montan SIEMPRE para conservar estado) -------- */}
+      <HistorySidebar
+        mobile
+        open={showHistory}
+        onClose={() => setShowHistory(false)}
+      />
+      
 
-      {/* Panel central de mensajes */}
+      {/* -------- Panel central -------- */}
       <div className="main-panel">
+        {/* Barra superior SOLO móvil */}
+        <header className="chat-mobile-nav">
+          <button onClick={() => setShowHistory(true)} className="nav-btn">
+            <Menu size={20} />
+          </button>
+          <h1 className="chat-title">Delfino Tours II</h1>
+          <button onClick={() => setShowFiles(true)} className="nav-btn">
+            <Folder size={20} />
+          </button>
+        </header>
+
         <section className="messages">
           {messages.map((m) => (
             <MessageBubble key={m.id} msg={m} />
@@ -41,19 +58,24 @@ export default function Chat() {
           <div ref={bottomRef} />
         </section>
 
-        
-
-        {/* Composer desacoplado */}
         <ChatInput disabled={loading} onSend={handleSend} />
-        {/* {!selectedFiles.length && (
-          <p style={{ textAlign: "center", color: "#9ca3af", bottom: '1rem' }}>
-            Sin archivos seleccionados — se consultarán <strong>todos</strong>.
-          </p>
-        )} */}
       </div>
+      <FileSidebar
+        mobile
+        open={showFiles}
+        onClose={() => setShowFiles(false)}
+      />
 
-      {/* Sidebar de archivos */}
-      <FileSidebar />
+      {/* -------- Overlay oscuro -------- */}
+      {(showHistory || showFiles) && (
+        <div
+          className="sidebar-overlay"
+          onClick={() => {
+            setShowHistory(false);
+            setShowFiles(false);
+          }}
+        />
+      )}
     </div>
   );
 }

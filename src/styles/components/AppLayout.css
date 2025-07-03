@@ -1,0 +1,133 @@
+/* -------- Layout base -------- */
+.app-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+.main-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* -------- Mobile nav bar -------- */
+.chat-mobile-nav {
+  display: none;                /* oculta en desktop */
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--gray-200);
+  background: #fff;
+}
+.chat-title { font-size: 14px; font-weight: 600; }
+.nav-btn {
+  background: none; border: none; padding: 4px; cursor: pointer;
+  color: var(--gray-800);
+}
+
+/* -------- Overlay oscuro -------- */
+.sidebar-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 900;                 /* debajo de sidebars (1000) */
+}
+
+/* -------- Sidebars mobile -------- */
+@media (max-width: 768px) {
+  /* muestra barra superior */
+  .chat-mobile-nav { display: flex; }
+
+  /* Historial */
+  .hsb-sidebar.mobile {
+    position: fixed;
+    top: 0; left: 0;
+    height: 100vh;
+    max-width: 80%;
+    width: 260px;
+    transform: translateX(-100%);
+    z-index: 1000;
+    transition: transform 0.3s ease;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  }
+  .hsb-sidebar.mobile.open { transform: translateX(0); }
+
+  /* Botón cerrar (solo móvil) */
+  .hsb-close-btn {
+    position: absolute;
+    top: 12px; right: 12px;
+    background: var(--gray-100);
+    border: none; border-radius: 50%;
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+
+  /* Archivo */
+  .file-sidebar.mobile {
+    position: fixed;
+    top: 0; right: 0;
+    height: 100vh;
+    max-width: 80%;
+    width: 260px;
+    transform: translateX(100%);
+    z-index: 1000;
+    transition: transform 0.3s ease;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+  }
+  .file-sidebar.mobile.open { transform: translateX(0); }
+
+  .file-close-btn {
+    position: absolute;
+    top: 12px; left: 12px;
+    background: var(--gray-100);
+    border: none; border-radius: 50%;
+    width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+
+  /* El main-panel llena todo */
+  .main-panel { width: 100%; }
+  
+  /* Oculta scrollbar ↓ si quieres */
+  .hsb-collapse-btn { display: none; }         /* sin “colapsar” en móvil */
+}
+
+/* -------- Desktop mantiene estilos existentes -------- */
+/* (tu CSS previo de .hsb-sidebar, .file-sidebar… sigue funcionando) */
+/* ====================================================================== */
+/* ====================   CORRECCIÓN VISTA DESKTOP   ==================== */
+/* ====================================================================== */
+@media (min-width: 768px) {
+  /* ——— Sidebars vuelven a su modo fijo ——— */
+  .hsb-sidebar.mobile,
+  .file-sidebar.mobile {
+    position: relative;      /* ya no “fixed” */
+    inset: 0;                /* resetea top/right */
+    transform: none !important;
+    width: 256px;
+    max-width: 256px;
+    height: auto;
+    box-shadow: none;
+    z-index: 0;
+  }
+
+  /* ——— Ocultamos controles solo necesarios en móvil ——— */
+  .hsb-close-btn,
+  .file-close-btn,
+  .sidebar-overlay,
+  .chat-mobile-nav {
+    display: none !important;
+  }
+
+  /* Main panel vuelve a ocupar el resto del ancho sin padding extra */
+  .main-panel {
+    width: auto;
+  }
+}
+
+/* ====================================================================== */
+/* ==================   AJUSTES EXTRAS PARA TABLET   ==================== */
+/* ====================================================================== */
+/* Opcional: si quieres que tablet de 768-1023 px use la misma UI grande   */
+/* pero conserve la barra superior, mantén lo de arriba sin cambios.       */
