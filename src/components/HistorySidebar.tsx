@@ -79,6 +79,7 @@ export default function HistorySidebar({
       className={`hsb-sidebar ${mobile ? "mobile" : ""} ${
         open ? "open" : ""
       } ${collapsed && !mobile ? "collapsed" : ""}`}
+      style={{maxHeight: mobile ? "100vh" : ""}}
     >
       {/* Cerrar (solo móvil) */}
       {mobile && (
@@ -180,7 +181,6 @@ export default function HistorySidebar({
           style={{
             display: "flex",
             gap: "8px",
-            marginTop: "auto",
             paddingTop: "12px",
           }}
         >
