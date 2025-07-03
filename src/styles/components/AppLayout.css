@@ -92,6 +92,22 @@
   /* Oculta scrollbar ↓ si quieres */
   .hsb-collapse-btn { display: none; }         /* sin “colapsar” en móvil */
 }
+/* AppLayout.css  ──  debajo de la regla @media (max-width:768px) */
+
+@media (max-width: 768px) {
+  .hsb-sidebar.mobile,
+  .file-sidebar.mobile {
+    /* antes: height: 100vh; */
+    height: 100dvh;                 /* 👉 se ajusta cuando se oculta la barra */
+  }
+  /* Dentro del mismo @media (max-width:768px) */
+.hsb-content {
+  overflow-y: auto;            /* ya lo tenías, reafirmamos */
+  overscroll-behavior: contain;/* evita “rebote” raro en Android */
+}
+
+}
+
 
 /* -------- Desktop mantiene estilos existentes -------- */
 /* (tu CSS previo de .hsb-sidebar, .file-sidebar… sigue funcionando) */
@@ -131,3 +147,13 @@
 /* ====================================================================== */
 /* Opcional: si quieres que tablet de 768-1023 px use la misma UI grande   */
 /* pero conserve la barra superior, mantén lo de arriba sin cambios.       */
+
+/* bloque fijo en la parte inferior del drawer */
+.hsb-footer {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
+  display: flex;
+  gap: 8px;
+}

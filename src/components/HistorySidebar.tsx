@@ -1,3 +1,6 @@
+/* src/components/HistorySidebar.tsx
+   – Drawer + desktop sidebar con footer sticky y soporte colapsable */
+
 import { useState, useMemo } from "react";
 import {
   ChevronLeft,
@@ -17,11 +20,11 @@ import "../styles/components/HistorySidebar.css";
 import type { Conversation, Message } from "../types/chat";
 
 type Props = {
-  /** Activa comportamiento drawer en móviles (<768 px) */
+  /** Drawer en pantallas < 768 px  */
   mobile?: boolean;
-  /** Si el drawer está abierto (móvil) */
+  /** Estado abierto (solo móvil)  */
   open?: boolean;
-  /** Callback para cerrar (clic en “X”) */
+  /** Callback al cerrar (tap en ❌) */
   onClose?: () => void;
 };
 
@@ -30,7 +33,7 @@ export default function HistorySidebar({
   open = false,
   onClose,
 }: Props) {
-  /* ---------- estado global ---------- */
+  /* ---------------- estado global ---------------- */
   const {
     conversations,
     currentId,
@@ -40,18 +43,17 @@ export default function HistorySidebar({
   } = useChatSlice();
   const { logout } = useAuthSlice();
 
-  /* ---------- estado local ---------- */
+  /* ---------------- estado local ---------------- */
   const [collapsed, setCollapsed] = useState(false);
   const [query, setQuery] = useState("");
 
-  /* ---------- búsqueda ---------- */
+  /* ---------------- filtrar y agrupar ---------------- */
   const filtered = useMemo<Conversation[]>(() => {
     if (!query.trim()) return conversations;
     const q = query.toLowerCase();
     return conversations.filter((c) => c.title.toLowerCase().includes(q));
   }, [conversations, query]);
 
-  /* ---------- agrupado por fecha ---------- */
   const grouped = useMemo<[string, Conversation[]][]>(() => {
     const map = new Map<string, Conversation[]>();
     filtered.forEach((c) => {
@@ -70,25 +72,23 @@ export default function HistorySidebar({
     return Array.from(map.entries());
   }, [filtered]);
 
-  const getLast = (msgs: Message[]): Message | undefined =>
-    msgs[msgs.length - 1];
+  const getLast = (msgs: Message[]) => msgs[msgs.length - 1];
 
-  /* ---------- render ---------- */
+  /* ---------------- render ---------------- */
   return (
     <aside
       className={`hsb-sidebar ${mobile ? "mobile" : ""} ${
         open ? "open" : ""
       } ${collapsed && !mobile ? "collapsed" : ""}`}
-      style={{maxHeight: mobile ? "100vh" : ""}}
     >
-      {/* Cerrar (solo móvil) */}
+      {/* ---- Cerrar (solo móvil) ---- */}
       {mobile && (
         <button className="hsb-close-btn" onClick={onClose}>
           <X size={18} />
         </button>
       )}
 
-      {/* Colapsar/expandir (solo desktop) */}
+      {/* ---- Colapsar / expandir (solo desktop) ---- */}
       {!mobile && (
         <button
           className="hsb-collapse-btn"
@@ -98,8 +98,9 @@ export default function HistorySidebar({
         </button>
       )}
 
+      {/* ---- Contenido scrollable ---- */}
       <div className="hsb-content">
-        {/* ----- Header ----- */}
+        {/* Header */}
         <header className="hsb-header">
           <div className="hsb-brand">
             <span className="hsb-logo">
@@ -109,7 +110,7 @@ export default function HistorySidebar({
           </div>
         </header>
 
-        {/* ----- Búsqueda ----- */}
+        {/* Buscador */}
         {!collapsed && (
           <div className="hsb-search">
             <Search size={12} className="hsb-search-ico" />
@@ -121,7 +122,7 @@ export default function HistorySidebar({
           </div>
         )}
 
-        {/* ----- Lista ----- */}
+        {/* Lista de chats */}
         <div className="hsb-list">
           {grouped.length === 0 ? (
             <div className="hsb-empty">
@@ -175,30 +176,24 @@ export default function HistorySidebar({
             ))
           )}
         </div>
+      </div>
 
-        {/* ----- Acciones inferiores ----- */}
-        <div
-          style={{
-            display: "flex",
-            gap: "8px",
-            paddingTop: "12px",
-          }}
+      {/* ---- Footer sticky (siempre visible) ---- */}
+      <div className="hsb-footer">
+        <button className="hsb-new" onClick={newChat}>
+          <Plus size={14} />
+          {!collapsed && <span>New Chat</span>}
+        </button>
+
+        <button
+          className="hsb-new"
+          style={{ background: "var(--gray-100)", color: "var(--gray-500)" }}
+          onClick={logout}
+          title="Cerrar sesión"
         >
-          <button className="hsb-new" onClick={newChat}>
-            <Plus size={14} />
-            {!collapsed && <span>New Chat</span>}
-          </button>
-
-          <button
-            className="hsb-new"
-            style={{ background: "var(--gray-100)", color: "var(--gray-500)" }}
-            onClick={logout}
-            title="Cerrar sesión"
-          >
-            <LogOut size={14} />
-            {!collapsed && <span>Logout</span>}
-          </button>
-        </div>
+          <LogOut size={14} />
+          {!collapsed && <span>Logout</span>}
+        </button>
       </div>
     </aside>
   );
