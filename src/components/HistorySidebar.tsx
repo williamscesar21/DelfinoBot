@@ -83,7 +83,13 @@ export default function HistorySidebar({
     >
       {/* ---- Cerrar (solo móvil) ---- */}
       {mobile && (
-        <button className="hsb-close-btn" onClick={onClose}>
+        <button
+          className="hsb-close-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose?.();
+          }}
+        >
           <X size={18} />
         </button>
       )}

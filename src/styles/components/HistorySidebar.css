@@ -209,3 +209,42 @@ body { font-family: 'Poppins', sans-serif; }
   gap: 8px;
   border-top: 1px solid var(--gray-200);
 }
+
+/* Asegura que los elementos interactivos no hereden eventos de click */
+.hsb-trash, 
+.hsb-close-btn,
+.hsb-collapse-btn,
+.hsb-new,
+.hsb-search input {
+  pointer-events: auto;
+}
+
+/* El contenedor principal no debe interceptar clicks en elementos hijos */
+.hsb-content {
+  pointer-events: none;
+}
+
+/* Los elementos que necesitan eventos deben habilitarlos explícitamente */
+.hsb-chat-item,
+.hsb-list > div {
+  pointer-events: auto;
+}
+/* Asegurar que los elementos interactivos sean claramente diferenciables */
+.hsb-trash {
+  pointer-events: auto;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.hsb-trash:hover {
+  opacity: 1;
+}
+
+.hsb-chat-item {
+  position: relative;
+}
+
+/* Feedback visual para múltiples clicks */
+.hsb-chat-item:active {
+  background-color: rgba(0,0,0,0.05);
+}
