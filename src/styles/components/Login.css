@@ -222,4 +222,70 @@
   gap: 1.25rem;
 }
 
+
+@media (min-width: 1024px) {
+  .mobile-welcome {
+    display: none;
+  }
+}
 /* input y buttons se conservan igual */
+/* Móvil y tablet: centrar todo */
+@media (max-width: 1024px) {
+  /* Ocultamos el hero */
+  .login-hero {
+    display: none;
+  }
+
+  /* El wrapper ahora abarca toda la altura de la pantalla
+     y centra su único hijo (.login-form-section) */
+  .login-wrapper {
+    flex-direction: column;
+    height: 100vh;              /* 100 % alto */
+    align-items: center;        /* centrar X */
+    justify-content: center;    /* centrar Y */
+  }
+
+  /* La sección de formulario también usa flex-column y se centra */
+  .login-form-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 480px;           /* evita que se estire demasiado en tablets */
+    padding: 2rem 1rem;
+    border-radius: var(--radius);
+  }
+
+  .mobile-welcome {
+    display: block;
+    font-size: 1.75rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--bg-bubble-user);
+  }
+
+  .login-box {
+    width: 100%;
+    padding: 2.5rem 2rem;
+    box-shadow: 0 8px 24px rgba(0, 90, 163, 0.15);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  /* Botones apilados, por estética */
+  .login-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 600px) {
+  /* un poco más compacto en móviles pequeños */
+  .login-box {
+    padding: 2rem 1.5rem;
+  }
+}
