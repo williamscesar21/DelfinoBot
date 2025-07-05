@@ -1,12 +1,13 @@
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { api } from "../api/axios";
-import { Message } from "../types/chat";
+import { api, getAuthCreds } from "../api/axios";
+import type { Message } from "../types/chat";
 
 /* ---------- Tipos ---------- */
 export interface Conversation {
-  id: string;
-  chatId: string;
+  id: string;         // id local
+  chatId: string;     // id backend
   title: string;
   messages: Message[];
 }
@@ -24,7 +25,7 @@ type ChatState = {
   toggleFile(id: string): void;
 };
 
-/* util local */
+/* ---------- util ---------- */
 const uuid = () => crypto.randomUUID();
 
 /* ---------- Store ---------- */
@@ -38,9 +39,9 @@ export const useChatSlice = create<ChatState>()(
 
       /* ── crear chat ── */
       async newChat() {
-        const { data } = await api.post("/chat/start");
-        const localId  = uuid();
-        set(s => ({
+        const { data } = await api.post("/chat/start"); // { chatId }
+        const localId = uuid();
+        set((s) => ({
           conversations: [
             ...s.conversations,
             { id: localId, chatId: data.chatId, title: "Nuevo chat", messages: [] }
@@ -49,43 +50,49 @@ export const useChatSlice = create<ChatState>()(
         }));
       },
 
-      /* ── seleccionar ── */
-      selectChat(id) { set({ currentId: id }); },
+      /* ── seleccionar chat ── */
+      selectChat(id) {
+        set({ currentId: id });
+      },
 
-      /* ── enviar (stream) ── */
+      /* ── enviar mensaje (SSE) ── */
       async sendMessage(text: string) {
-        let { currentId, conversations } = get();
-
-        if (!currentId) {
+        // Asegura que exista un chat
+        if (!get().currentId) {
           await get().newChat();
-          currentId    = get().currentId!;
-          conversations = get().conversations;
         }
-
-        const idx = conversations.findIndex(c => c.id === currentId);
+        const { currentId, conversations } = get();
+        const idx = conversations.findIndex((c) => c.id === currentId);
         if (idx === -1) return;
         const conv = conversations[idx];
 
+        /* --- optimistic UI --- */
         const userMsg: Message = {
-          id: uuid(), role: "user", content: text, timestamp: Date.now()
+          id: uuid(),
+          role: "user",
+          content: text,
+          timestamp: Date.now()
         };
-        const botId = uuid();
-        const botMsg: Message = {
-          id: botId, role: "assistant", content: "", timestamp: Date.now()
+        const botId = uuid(); // id del mensaje "en construcción"
+        const draftBot: Message = {
+          id: botId,
+          role: "assistant",
+          content: "",
+          timestamp: Date.now()
         };
 
-        const draft = {
+        const updatedDraft: Conversation = {
           ...conv,
           title: conv.messages.length ? conv.title : text,
-          messages: [...conv.messages, userMsg, botMsg]
+          messages: [...conv.messages, userMsg, draftBot]
         };
-        set(s => {
-          const list      = [...s.conversations];
-          list[idx]       = draft;
+        set((s) => {
+          const list = [...s.conversations];
+          list[idx] = updatedDraft;
           return { conversations: list, loading: true };
         });
 
-        /* -------------- petición -------------- */
+        /* ---------- llamada SSE ---------- */
         const body = {
           chatId: conv.chatId,
           message: text,
@@ -93,45 +100,46 @@ export const useChatSlice = create<ChatState>()(
           stream: true
         };
 
-        /* convierte cabeceras Axios -> string */
-        const axiosCommon = api.defaults.headers.common as Record<string, unknown>;
-        const mergedHeaders: Record<string, string> = {
+        /*   cabeceras  */
+        const baseHeaders: Record<string, string> = {
           "Content-Type": "application/json",
           ...Object.fromEntries(
-            Object.entries(axiosCommon).map(([k, v]) => [k, String(v)])
+            Object.entries(api.defaults.headers.common as Record<string, unknown>)
+              .map(([k, v]) => [k, String(v)])
           )
         };
 
-        try {
-          const resp = await fetch(
-            `${api.defaults.baseURL}/chat`,
-            {
-              method : "POST",
-              headers: mergedHeaders,
-              body   : JSON.stringify(body)
-            }
-          );
+        const { user, pass } = getAuthCreds();
+        if (user && pass) {
+          baseHeaders.Authorization = "Basic " + btoa(`${user}:${pass}`);
+        }
 
-          const reader  = resp.body!.getReader();
+        try {
+          const resp = await fetch(`${api.defaults.baseURL}/chat`, {
+            method: "POST",
+            headers: baseHeaders,
+            body: JSON.stringify(body)
+          });
+
+          const reader = resp.body!.getReader();
           const decoder = new TextDecoder();
-          let buffer    = "";
+          let buffer = "";
 
           while (true) {
             const { value, done } = await reader.read();
             if (done) break;
 
             buffer += decoder.decode(value, { stream: true });
-            const chunks = buffer.split("\n\n");
-            buffer = chunks.pop()!;
+            const parts = buffer.split("\n\n");
+            buffer = parts.pop()!; // lo que quedó incompleto
 
-            chunks.forEach(chunk => {
+            parts.forEach((chunk) => {
               if (!chunk.startsWith("data:")) return;
-              const delta = chunk.slice(5);
-
-              set(s => {
-                const cIdx = s.conversations.findIndex(c => c.id === currentId);
+              const delta = chunk.slice(5); // “data:”
+              set((s) => {
+                const cIdx = s.conversations.findIndex((c) => c.id === currentId);
                 if (cIdx === -1) return s;
-                const msgs = s.conversations[cIdx].messages.map(m =>
+                const msgs = s.conversations[cIdx].messages.map((m) =>
                   m.id === botId ? { ...m, content: m.content + delta } : m
                 );
                 const list = [...s.conversations];
@@ -147,29 +155,35 @@ export const useChatSlice = create<ChatState>()(
         }
       },
 
-      /* ── borrar ── */
+      /* ── borrar chat ── */
       async deleteChat(id) {
-        const conv = get().conversations.find(c => c.id === id);
+        const conv = get().conversations.find((c) => c.id === id);
         if (!conv) return;
 
-        set(s => ({
-          conversations: s.conversations.filter(c => c.id !== id),
-          currentId    : s.currentId === id ? null : s.currentId
+        set((s) => ({
+          conversations: s.conversations.filter((c) => c.id !== id),
+          currentId: s.currentId === id ? null : s.currentId
         }));
 
-        try { await api.delete(`/chat/${conv.chatId}`); }
-        catch (err) { console.warn("Delete failed:", err); }
+        try {
+          await api.delete(`/chat/${conv.chatId}`);
+        } catch (err) {
+          console.warn("Delete failed:", err);
+        }
       },
 
-      /* ── toggle archivo ── */
+      /* ── toggle archivo seleccionado ── */
       toggleFile(id) {
-        set(s =>
+        set((s) =>
           s.selectedFiles.includes(id)
-            ? { selectedFiles: s.selectedFiles.filter(x => x !== id) }
+            ? { selectedFiles: s.selectedFiles.filter((x) => x !== id) }
             : { selectedFiles: [...s.selectedFiles, id] }
         );
       }
     }),
-    { name: "chat-storage", storage: createJSONStorage(() => localStorage) }
+    {
+      name: "chat-storage",
+      storage: createJSONStorage(() => localStorage)
+    }
   )
 );
