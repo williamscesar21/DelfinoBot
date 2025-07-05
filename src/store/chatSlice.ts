@@ -4,10 +4,10 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { api, getAuthCreds } from "../api/axios";
 import type { Message } from "../types/chat";
 
-/* ---------- Tipos ---------- */
+/* ────────────────── tipos ────────────────── */
 export interface Conversation {
-  id: string;         // id local
-  chatId: string;     // id backend
+  id: string;          // id local
+  chatId: string;      // id backend
   title: string;
   messages: Message[];
 }
@@ -25,10 +25,10 @@ type ChatState = {
   toggleFile(id: string): void;
 };
 
-/* ---------- util ---------- */
+/* util local */
 const uuid = () => crypto.randomUUID();
 
-/* ---------- Store ---------- */
+/* ────────────────── store ────────────────── */
 export const useChatSlice = create<ChatState>()(
   persist(
     (set, get) => ({
@@ -39,8 +39,8 @@ export const useChatSlice = create<ChatState>()(
 
       /* ── crear chat ── */
       async newChat() {
-        const { data } = await api.post("/chat/start"); // { chatId }
-        const localId = uuid();
+        const { data } = await api.post("/chat/start");   // { chatId }
+        const localId  = uuid();
         set((s) => ({
           conversations: [
             ...s.conversations,
@@ -55,93 +55,87 @@ export const useChatSlice = create<ChatState>()(
         set({ currentId: id });
       },
 
-      /* ── enviar mensaje (SSE) ── */
+      /* ── enviar mensaje + SSE ── */
       async sendMessage(text: string) {
-        // Asegura que exista un chat
-        if (!get().currentId) {
-          await get().newChat();
-        }
+        /* siempre asegura un chat existente */
+        if (!get().currentId) await get().newChat();
+
         const { currentId, conversations } = get();
-        const idx = conversations.findIndex((c) => c.id === currentId);
+        const idx = conversations.findIndex(c => c.id === currentId);
         if (idx === -1) return;
         const conv = conversations[idx];
 
-        /* --- optimistic UI --- */
+        /* optimistic UI */
         const userMsg: Message = {
-          id: uuid(),
-          role: "user",
-          content: text,
-          timestamp: Date.now()
+          id: uuid(), role: "user", content: text, timestamp: Date.now()
         };
-        const botId = uuid(); // id del mensaje "en construcción"
+        const botId = uuid();          // placeholder
         const draftBot: Message = {
-          id: botId,
-          role: "assistant",
-          content: "",
-          timestamp: Date.now()
+          id: botId, role: "assistant", content: "", timestamp: Date.now()
         };
 
-        const updatedDraft: Conversation = {
-          ...conv,
-          title: conv.messages.length ? conv.title : text,
-          messages: [...conv.messages, userMsg, draftBot]
-        };
         set((s) => {
-          const list = [...s.conversations];
-          list[idx] = updatedDraft;
+          const list      = [...s.conversations];
+          list[idx]       = {
+            ...conv,
+            title    : conv.messages.length ? conv.title : text,
+            messages : [...conv.messages, userMsg, draftBot]
+          };
           return { conversations: list, loading: true };
         });
 
         /* ---------- llamada SSE ---------- */
         const body = {
-          chatId: conv.chatId,
-          message: text,
+          chatId     : conv.chatId,
+          message    : text,
           selectedIds: get().selectedFiles,
-          stream: true
+          stream     : true
         };
 
-        /*   cabeceras  */
-        const baseHeaders: Record<string, string> = {
-          "Content-Type": "application/json",
-          ...Object.fromEntries(
-            Object.entries(api.defaults.headers.common as Record<string, unknown>)
-              .map(([k, v]) => [k, String(v)])
-          )
-        };
-
+        /* cabeceras limpias */
         const { user, pass } = getAuthCreds();
+        const headers: HeadersInit = {
+          "Content-Type": "application/json",
+          "Accept"      : "text/event-stream"
+        };
         if (user && pass) {
-          baseHeaders.Authorization = "Basic " + btoa(`${user}:${pass}`);
+          headers.Authorization = "Basic " + btoa(`${user}:${pass}`);
         }
 
         try {
           const resp = await fetch(`${api.defaults.baseURL}/chat`, {
-            method: "POST",
-            headers: baseHeaders,
-            body: JSON.stringify(body)
+            method : "POST",
+            headers,
+            body   : JSON.stringify(body)
           });
 
-          const reader = resp.body!.getReader();
-          const decoder = new TextDecoder();
-          let buffer = "";
+          const reader  = resp.body?.getReader();
+          if (!reader) throw new Error("No stream from server");
 
+          const decoder = new TextDecoder();
+          let   buffer  = "";
+
+          /* lee trozos SSE */
           while (true) {
             const { value, done } = await reader.read();
             if (done) break;
 
             buffer += decoder.decode(value, { stream: true });
-            const parts = buffer.split("\n\n");
-            buffer = parts.pop()!; // lo que quedó incompleto
+            const chunks = buffer.split("\n\n");
+            buffer = chunks.pop()!;            // resta lo incompleto
 
-            parts.forEach((chunk) => {
+            chunks.forEach((chunk) => {
               if (!chunk.startsWith("data:")) return;
-              const delta = chunk.slice(5); // “data:”
+              const delta = chunk.slice(5);    // elimina "data:"
+              /* actualiza el mensaje del bot en tiempo real */
               set((s) => {
-                const cIdx = s.conversations.findIndex((c) => c.id === currentId);
+                const cIdx = s.conversations.findIndex(c => c.id === currentId);
                 if (cIdx === -1) return s;
-                const msgs = s.conversations[cIdx].messages.map((m) =>
+
+                const msgs = s.conversations[cIdx].messages.map(m =>
                   m.id === botId ? { ...m, content: m.content + delta } : m
                 );
+
                 const list = [...s.conversations];
                 list[cIdx] = { ...s.conversations[cIdx], messages: msgs };
                 return { conversations: list };
@@ -149,7 +143,7 @@ export const useChatSlice = create<ChatState>()(
             });
           }
         } catch (err) {
-          console.error(err);
+          console.error("✖ sendMessage:", err);
         } finally {
           set({ loading: false });
         }
@@ -157,32 +151,31 @@ export const useChatSlice = create<ChatState>()(
 
       /* ── borrar chat ── */
       async deleteChat(id) {
-        const conv = get().conversations.find((c) => c.id === id);
+        const conv = get().conversations.find(c => c.id === id);
         if (!conv) return;
 
+        /* quita de la UI */
         set((s) => ({
-          conversations: s.conversations.filter((c) => c.id !== id),
-          currentId: s.currentId === id ? null : s.currentId
+          conversations: s.conversations.filter(c => c.id !== id),
+          currentId    : s.currentId === id ? null : s.currentId
         }));
 
-        try {
-          await api.delete(`/chat/${conv.chatId}`);
-        } catch (err) {
-          console.warn("Delete failed:", err);
-        }
+        /* intenta borrar en el backend (ignora fallo) */
+        try { await api.delete(`/chat/${conv.chatId}`); }
+        catch (err) { console.warn("Delete failed:", err); }
       },
 
-      /* ── toggle archivo seleccionado ── */
+      /* ── marcar / desmarcar archivo ── */
       toggleFile(id) {
         set((s) =>
           s.selectedFiles.includes(id)
-            ? { selectedFiles: s.selectedFiles.filter((x) => x !== id) }
+            ? { selectedFiles: s.selectedFiles.filter(x => x !== id) }
             : { selectedFiles: [...s.selectedFiles, id] }
         );
       }
     }),
     {
-      name: "chat-storage",
+      name   : "chat-storage",
       storage: createJSONStorage(() => localStorage)
     }
   )
