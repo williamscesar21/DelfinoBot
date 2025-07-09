@@ -1,0 +1,57 @@
+.md-editor {
+  border: 1px solid #c4c4c4;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  height: 260px;               /* igual que antes (200 px + tabs) */
+  overflow: hidden;
+}
+
+/* pestañas */
+.md-tabs {
+  display: flex;
+  border-bottom: 1px solid #c4c4c4;
+}
+
+.md-tabs button {
+  flex: 1;
+  padding: 6px 0;
+  font-size: 0.85rem;
+  background: #f7f7f7;
+  border: none;
+  cursor: pointer;
+}
+
+.md-tabs .active {
+  background: #ffffff;
+  font-weight: 600;
+  border-bottom: 2px solid #0066ff;
+}
+
+/* textarea */
+.md-textarea {
+  flex: 1;
+  resize: vertical;
+  font-family: monospace;
+  font-size: 0.85rem;
+  padding: 8px;
+  border: none;
+  outline: none;
+}
+
+/* preview */
+.md-preview {
+  flex: 1;
+  padding: 8px 10px;
+  overflow: auto;
+  font-size: 0.85rem;
+}
+
+/* algo de estilo básico para MD */
+.md-preview h1 { font-size: 1.4rem; margin: 0.5em 0; }
+.md-preview h2 { font-size: 1.2rem; margin: 0.5em 0; }
+.md-preview pre {
+  background: #f2f2f2;
+  padding: 6px;
+  overflow-x: auto;
+}

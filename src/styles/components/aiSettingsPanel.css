@@ -1,0 +1,90 @@
+/* ---- Contenedor principal ---- */
+.ais-panel {
+  width: 100%;
+  max-width: 90vw;
+  padding: 24px;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  font-family: system-ui, sans-serif;
+}
+
+/* ---- Secciones ---- */
+.ais-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ---- Etiquetas y filas ---- */
+.ais-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.ais-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ---- Controles ---- */
+.ais-textarea {
+  height: 200px;
+  resize: vertical;
+  font-family: monospace;
+  font-size: 0.85rem;
+  padding: 8px;
+  border: 1px solid #c4c4c4;
+  border-radius: 4px;
+}
+
+.ais-range {
+  width: 100%;
+}
+
+.ais-input-number {
+  width: 80px;
+  text-align: center;
+  padding: 4px;
+  border: 1px solid #c4c4c4;
+  border-radius: 4px;
+}
+
+/* ---- Botones ---- */
+.ais-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  background: #0066ff;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.ais-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ais-btn:not(:disabled):hover {
+  background: #0052cc;
+}
+
+.ais-btn--secondary {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.ais-btn--secondary:hover {
+  background: #e0e0e0;
+}
+
+/* ---- Acciones (pie) ---- */
+.ais-actions {
+  text-align: right;
+}
