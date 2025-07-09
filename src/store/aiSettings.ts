@@ -26,7 +26,8 @@ export const useAiSettings = create<AiSettings>()(
   Lo siento, no dispongo de esa información.
 • Responde SIEMPRE en Markdown claro y conciso y con la referencia al archivo.
 Recuerda siempre revisar todos los archivos si no se especifica uno
-Y cada vez que te pregunten por algun precio revisar el Tarifario.`,
+Y cada vez que te pregunten por algun precio revisar el Tarifario.
+Siempre que pidan fechas de las SEASON en el Modelo Tarifario PANAMA 2025 V4 las sacaras de las columnas 9 y 11 del Modelo Tarifario PANAMA 2025 V4`,
       maxCharsPerFile: 10_000,
       maxHistory: 8,
 
