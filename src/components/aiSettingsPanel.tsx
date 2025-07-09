@@ -1,11 +1,25 @@
 import { useState } from "react";
 import { useAiSettings } from "../store/aiSettings";
-import "../styles/components/aiSettingsPanel.css";      // ⬅ importa los estilos de más abajo
 import MarkdownEditor from "./MarkdownEditor";
+import "../styles/components/aiSettingsPanel.css";
 
 interface AiSettingsPanelProps {
   onClose?: () => void;
 }
+
+/* --- valores por defecto (los mismos que en tu store) --- */
+const DEFAULT_PROMPT = `Eres **DelfinoBot**, asistente virtual de *Delfino Tours II*.
+
+• Usa únicamente los fragmentos entre «<<<Archivo|chunk:n>>> … <<<FIN>>>».
+• Cuando cites, indica (Archivo.ext · chunk:n).
+• Si no está en los documentos, responde exactamente:
+  Lo siento, no dispongo de esa información.
+• Responde SIEMPRE en Markdown claro y conciso y con la referencia al archivo.
+Recuerda siempre revisar todos los archivos si no se especifica uno
+Y cada vez que te pregunten por algun precio revisar el Tarifario.
+Siempre que pidan fechas de las SEASON en el Modelo Tarifario PANAMA 2025 V4 las sacaras de las columnas 9 y 11 del Modelo Tarifario PANAMA 2025 V4`;
+const DEFAULT_MAX_CHARS  = 10_000;
+const DEFAULT_MAX_HISTORY = 8;
 
 export default function AiSettingsPanel({ onClose }: AiSettingsPanelProps) {
   /* ----- store global ----- */
@@ -18,31 +32,39 @@ export default function AiSettingsPanel({ onClose }: AiSettingsPanelProps) {
     setMaxHistory,
   } = useAiSettings();
 
-  /* ----- estado local para el prompt ----- */
+  /* ----- estado local ----- */
   const [promptDraft, setPromptDraft] = useState<string>(systemPrompt);
 
   const handleSavePrompt = () => setPrompt(promptDraft.trim());
+
+  const handleReset = () => {
+    setPrompt(DEFAULT_PROMPT);
+    setMaxChars(DEFAULT_MAX_CHARS);
+    setMaxHistory(DEFAULT_MAX_HISTORY);
+    setPromptDraft(DEFAULT_PROMPT);          // actualiza editor local
+  };
 
   return (
     <div className="ais-panel">
       {/* ---------- Prompt ---------- */}
       <section className="ais-section">
-        <label className="ais-label" htmlFor="promptArea">
-          Prompt del sistema
-        </label>
+        <label className="ais-label">Prompt del sistema</label>
 
-        <MarkdownEditor
-            value={promptDraft}
-            onChange={setPromptDraft}
-        />
+        <MarkdownEditor value={promptDraft} onChange={setPromptDraft} />
 
-        <button
-          className="ais-btn"
-          disabled={promptDraft.trim() === systemPrompt.trim()}
-          onClick={handleSavePrompt}
-        >
-          Guardar prompt
-        </button>
+        <div className="ais-row" style={{ gap: "8px" }}>
+          <button
+            className="ais-btn"
+            disabled={promptDraft.trim() === systemPrompt.trim()}
+            onClick={handleSavePrompt}
+          >
+            Guardar prompt
+          </button>
+
+          <button className="ais-btn ais-btn--secondary" onClick={handleReset}>
+            Restablecer valores
+          </button>
+        </div>
       </section>
 
       {/* ---------- maxCharsPerFile ---------- */}
