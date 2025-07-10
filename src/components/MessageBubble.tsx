@@ -1,21 +1,28 @@
-import { Message } from "../types/chat";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { Message }    from "../types/chat";
+import { marked }     from "marked";
+import { autoTable }  from "../utils/autoTable";
 import "../styles/components/MessageBubble.css";
 
-type Props = {
-  msg: Message;
-};
+marked.setOptions({ gfm: true, breaks: true, async: false });
+
+type Props = { msg: Message };
 
 export default function MessageBubble({ msg }: Props) {
-  const isUser = msg.role === "user";
+  const isUser  = msg.role === "user";
+
+  /* ① reconstruimos y limpiamos la tabla */
+  const fixedMd = autoTable(msg.content);
+
+  /* ② Markdown → HTML */
+  const html    = marked.parse(fixedMd) as string;
 
   return (
     <div className={`bubble ${isUser ? "user" : "bot"}`}>
       {msg.cached && <span className="badge">cache</span>}
-      <div className="bubble-content">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
-      </div>
+      <div
+        className="bubble-content"
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
     </div>
   );
 }
