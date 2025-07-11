@@ -1,15 +1,15 @@
 /**
- * Arregla tablas que llegan con cada celda en una línea separada:
+ * Convierte “tablas rotas” (cada celda en una línea) en tablas Markdown GFM estándar.
  *
+ * De:
  * | Col1
  * | Col2
- * ...
- * |-----   (línea de guiones)
+ * |-----
  *
- * Devuelve una tabla GFM estándar
+ * A:
  * | Col1 | Col2 |
  * |------|------|
- * | ...  | ...  |
+ * | …    | …    |
  */
 export function fixBrokenTables(md: string): string {
   const lines = md.split(/\r?\n/);
@@ -17,38 +17,33 @@ export function fixBrokenTables(md: string): string {
 
   let buffer: string[] = [];
   let columnCount = 0;
-  let inBrokenTable = false;
 
   const flushRow = () => {
     if (!buffer.length) return;
-    out.push("| " + buffer.join(" | ") + " |");
+    out.push(`| ${buffer.join(" | ")} |`);
     buffer = [];
   };
 
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i].trimEnd();
 
-    // 1) header separator (---) - produce la línea separadora GFM
+    // 1) Separador de cabecera (“|-----”) → línea de separadores GFM
     if (/^\|[-\s]+$/.test(l)) {
-      inBrokenTable = true;
-      columnCount = buffer.length;          // nº de celdas en header
-      flushRow();                           // header en una sola línea
-      out.push("|" + " --- |".repeat(columnCount)); // ----- line
-      continue;                             // skip original dashed line
+      columnCount = buffer.length;        // nº celdas en la cabecera
+      flushRow();                         // cabecera en una sola línea
+      out.push("|" + " --- |".repeat(columnCount)); // línea de guiones
+      continue;                           // descarta la original
     }
 
-    // 2) líneas de celda sueltas ("| Texto")
+    // 2) Celdas sueltas (“| Texto”)
     if (/^\|/.test(l) && !/^\|[-\s]+$/.test(l)) {
-      inBrokenTable = true;
       buffer.push(l.replace(/^\|\s?/, "").trim());
-      // Si ya tenemos columna completa (posterior a header)
-      if (columnCount && buffer.length === columnCount) flushRow();
-      continue; // no guardar la línea original
+      if (columnCount && buffer.length === columnCount) flushRow(); // fila completa
+      continue;                           // descarta la original
     }
 
-    // 3) línea fuera de tabla
+    // 3) Línea fuera de tabla
     flushRow();
-    inBrokenTable = false;
     out.push(l);
   }
 
