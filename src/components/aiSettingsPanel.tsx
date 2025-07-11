@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { toast } from "react-toastify";          // npm i react-toastify
 import { useAiSettings } from "../store/aiSettings";
+import { api } from "../api/axios";
 import MarkdownEditor from "./MarkdownEditor";
 import "../styles/components/aiSettingsPanel.css";
 
@@ -7,7 +9,7 @@ interface AiSettingsPanelProps {
   onClose?: () => void;
 }
 
-/* --- valores por defecto (los mismos que en tu store) --- */
+/* --- valores por defecto (mismos que en tu store) --- */
 const DEFAULT_PROMPT = `Eres **DelfinoBot**, asistente virtual de *Delfino Tours II*.
 
 • Usa únicamente los fragmentos entre «<<<Archivo|chunk:n>>> … <<<FIN>>>».
@@ -18,11 +20,11 @@ const DEFAULT_PROMPT = `Eres **DelfinoBot**, asistente virtual de *Delfino Tours
 Recuerda siempre revisar todos los archivos si no se especifica uno
 Y cada vez que te pregunten por algun precio revisar el Tarifario.
 Siempre que pidan fechas de las SEASON en el Modelo Tarifario PANAMA 2025 V4 las sacaras de las columnas 9 y 11 del Modelo Tarifario PANAMA 2025 V4`;
-const DEFAULT_MAX_CHARS  = 10_000;
+const DEFAULT_MAX_CHARS   = 10_000;
 const DEFAULT_MAX_HISTORY = 8;
 
 export default function AiSettingsPanel({ onClose }: AiSettingsPanelProps) {
-  /* ----- store global ----- */
+  /* ---------- store global ---------- */
   const {
     systemPrompt,
     maxCharsPerFile,
@@ -32,18 +34,34 @@ export default function AiSettingsPanel({ onClose }: AiSettingsPanelProps) {
     setMaxHistory,
   } = useAiSettings();
 
-  /* ----- estado local ----- */
-  const [promptDraft, setPromptDraft] = useState<string>(systemPrompt);
+  /* ---------- estado local ---------- */
+  const [promptDraft, setPromptDraft] = useState(systemPrompt);
+  const [isReindexing, setIsReindexing] = useState(false);
 
+  /* ---------- acciones ---------- */
   const handleSavePrompt = () => setPrompt(promptDraft.trim());
 
   const handleReset = () => {
     setPrompt(DEFAULT_PROMPT);
     setMaxChars(DEFAULT_MAX_CHARS);
     setMaxHistory(DEFAULT_MAX_HISTORY);
-    setPromptDraft(DEFAULT_PROMPT);          // actualiza editor local
+    setPromptDraft(DEFAULT_PROMPT);
   };
 
+  const handleReindex = async () => {
+    setIsReindexing(true);
+    try {
+      await api.post("/files/reindex");      // ← nueva ruta del backend
+      toast.success("Índice actualizado correctamente");
+    } catch (err) {
+      console.error(err);
+      toast.error("No se pudo actualizar el índice");
+    } finally {
+      setIsReindexing(false);
+    }
+  };
+
+  /* ---------- UI ---------- */
   return (
     <div className="ais-panel">
       {/* ---------- Prompt ---------- */}
@@ -52,7 +70,7 @@ export default function AiSettingsPanel({ onClose }: AiSettingsPanelProps) {
 
         <MarkdownEditor value={promptDraft} onChange={setPromptDraft} />
 
-        <div className="ais-row" style={{ gap: "8px" }}>
+        <div className="ais-row" style={{ gap: "8px", flexWrap: "wrap" }}>
           <button
             className="ais-btn"
             disabled={promptDraft.trim() === systemPrompt.trim()}
@@ -61,8 +79,19 @@ export default function AiSettingsPanel({ onClose }: AiSettingsPanelProps) {
             Guardar prompt
           </button>
 
-          <button className="ais-btn ais-btn--secondary" onClick={handleReset}>
+          <button
+            className="ais-btn ais-btn--secondary"
+            onClick={handleReset}
+          >
             Restablecer valores
+          </button>
+
+          <button
+            className="ais-btn ais-btn--warning"
+            onClick={handleReindex}
+            disabled={isReindexing}
+          >
+            {isReindexing ? "Actualizando…" : "Actualización de archivos"}
           </button>
         </div>
       </section>
@@ -104,7 +133,10 @@ export default function AiSettingsPanel({ onClose }: AiSettingsPanelProps) {
 
       {onClose && (
         <div className="ais-actions">
-          <button className="ais-btn ais-btn--secondary" onClick={onClose}>
+          <button
+            className="ais-btn ais-btn--secondary"
+            onClick={onClose}
+          >
             Cerrar
           </button>
         </div>

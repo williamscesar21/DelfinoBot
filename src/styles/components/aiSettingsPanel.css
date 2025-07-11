@@ -88,3 +88,13 @@
 .ais-actions {
   text-align: right;
 }
+
+
+/* en styles/components/aiSettingsPanel.css */
+.ais-btn--warning {
+  background: #f59e0b;
+  color: #fff;
+}
+.ais-btn--warning:disabled {
+  opacity: 0.55;
+}
