@@ -1,8 +1,9 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getAnalytics, isSupported }   from "firebase/analytics";
+import { getFirestore } from "firebase/firestore";
+import { getAnalytics, isSupported } from "firebase/analytics";
 
-/* --- Config de tu proyecto (Firebase Console) --- */
+/* --- Configuración de tu proyecto --- */
 const firebaseConfig = {
   apiKey:            "AIzaSyC--pekUEdWrJZa1ZeBBw1A8x3x2zT7KmY",
   authDomain:        "apichatgptdelfino.firebaseapp.com",
@@ -13,11 +14,11 @@ const firebaseConfig = {
   measurementId:     "G-6DXN5MSGZG",
 };
 
-const app  = initializeApp(firebaseConfig);
+export const app   = initializeApp(firebaseConfig);
+export const auth  = getAuth(app);
+export const db    = getFirestore(app);
 
-/* --- Auth --- */
-export const auth            = getAuth(app);
-export const googleProvider  = new GoogleAuthProvider();
+export const googleProvider = new GoogleAuthProvider();
 
-/* --- Analytics (opcional; solo si navigator.supports) --- */
+/* --- Analytics (opcional) --- */
 isSupported().then((ok) => ok && getAnalytics(app));

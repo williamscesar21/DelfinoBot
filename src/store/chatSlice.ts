@@ -1,18 +1,34 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { api, getAuthCreds } from "../api/axios";
-import { useAiSettings } from "./aiSettings";          // 👈 nuevo import
+import { api } from "../api/axios";
+
+import { auth, db } from "../firebase";
+import {
+  collection,
+  doc,
+  addDoc,
+  deleteDoc,
+  getDocs,
+  query,
+  orderBy,
+  serverTimestamp,
+  updateDoc,
+} from "firebase/firestore";
+import { onAuthStateChanged, type User } from "firebase/auth";
+import { getAuthCreds } from "../api/axios";
+
 import type { Message } from "../types/chat";
 
-/* ────────── tipos ────────── */
+/** Un chat en nuestra UI y en Firestore */
 export interface Conversation {
-  id: string;           // id local (UI)
-  chatId: string;       // id backend
+  id: string;      // coincide con el docId en Firestore
+  chatId: string;  // id que devuelve el backend
   title: string;
   messages: Message[];
 }
 
+/** Estado completo de la aplicación de chat */
 type ChatState = {
   conversations: Conversation[];
   currentId: string | null;
@@ -26,10 +42,10 @@ type ChatState = {
   toggleFile(id: string): void;
 };
 
-/* util */
-const uuid = () => crypto.randomUUID();
+/** Generador de UUID para mensajes */
+// const uuid = () => crypto.randomUUID();
 
-/* ────────── store ────────── */
+/** Creamos el slice con persistencia reducida */
 export const useChatSlice = create<ChatState>()(
   persist(
     (set, get) => ({
@@ -38,175 +54,277 @@ export const useChatSlice = create<ChatState>()(
       selectedFiles: [],
       loading: false,
 
-      /* ── crear chat ── */
+      /** 1) Crear un chat nuevo en backend + Firestore */
       async newChat() {
-        const { data } = await api.post("/chat/start");   // { chatId }
-        const localId  = uuid();
+        const { data } = await api.post("/chat/start"); // { chatId }
+        const user = auth.currentUser as User | null;
+        if (!user) return;
+
+        // 1.1) Firestore: añade doc en /users/{uid}/chats
+        const ref = await addDoc(
+          collection(db, "users", user.uid, "chats"),
+          {
+            chatId: data.chatId,
+            title: "Nuevo chat",
+            messages: [],
+            updatedAt: serverTimestamp(),
+          }
+        );
+
+        // 1.2) UI local
         set((s) => ({
           conversations: [
             ...s.conversations,
-            { id: localId, chatId: data.chatId, title: "Nuevo chat", messages: [] },
+            {
+              id: ref.id,
+              chatId: data.chatId,
+              title: "Nuevo chat",
+              messages: [],
+            },
           ],
-          currentId: localId,
+          currentId: ref.id,
         }));
       },
 
-      /* ── seleccionar chat ── */
-      selectChat(id) { set({ currentId: id }); },
+      /** 2) Cambiar de conversación */
+      selectChat(id: string) {
+        set({ currentId: id });
+      },
 
-      /* ── enviar mensaje ── */
+      /** 3) Enviar mensaje al backend (SSE o JSON) y guardar en Firestore */
+      /* dentro de useChatSlice -> sendMessage */
       async sendMessage(text: string) {
-        /* 0️⃣ asegura conversación */
+        // 0️⃣ Asegura conversación
         if (!get().currentId) await get().newChat();
-
         const { currentId, conversations } = get();
-        const idx  = conversations.findIndex((c) => c.id === currentId);
+        if (!currentId) return;
+
+        const idx = conversations.findIndex((c) => c.id === currentId);
         if (idx === -1) return;
         const conv = conversations[idx];
 
-        /* 1️⃣ optimistic UI */
+        // 1️⃣ Optimistic UI
         const userMsg: Message = {
-          id: uuid(), role: "user", content: text, timestamp: Date.now(),
+          id: crypto.randomUUID(),
+          role: "user",
+          content: text,
+          timestamp: Date.now(),
         };
-        const botId = uuid();
+        const botPlaceholderId = crypto.randomUUID();
         const botMsg: Message = {
-          id: botId, role: "assistant", content: "", timestamp: Date.now(),
+          id: botPlaceholderId,
+          role: "assistant",
+          content: "",
+          timestamp: Date.now(),
         };
 
         set((s) => {
           const list = [...s.conversations];
-          list[idx]  = {
+          list[idx] = {
             ...conv,
-            title   : conv.messages.length ? conv.title : text,
+            title: conv.messages.length ? conv.title : text,
             messages: [...conv.messages, userMsg, botMsg],
           };
           return { conversations: list, loading: true };
         });
 
-        /* 2️⃣ ajustes actuales de IA (prompt / límites) */
-        const {
-          systemPrompt,
-          maxCharsPerFile,
-          maxHistory,
-        } = useAiSettings.getState();
-
-        /* 3️⃣  prepara petición */
+        // 2️⃣ Prepara fetch
         const body = {
-          chatId     : conv.chatId,
-          message    : text,
+          chatId: conv.chatId,
+          message: text,
           selectedIds: get().selectedFiles,
-          stream     : true,
-
-          /* 👇 se envían al backend */
-          systemPrompt,
-          maxCharsPerFile,
-          maxHistory,
+          stream: true,
         };
-
         const headers: HeadersInit = {
           "Content-Type": "application/json",
-          Accept        : "text/event-stream,application/json",
+          Accept: "text/event-stream,application/json",
         };
         const { basicUser, basicPass } = getAuthCreds();
-
         if (basicUser && basicPass) {
           headers.Authorization = "Basic " + btoa(`${basicUser}:${basicPass}`);
         }
 
-
-        /* 4️⃣ fetch */
         try {
           const resp = await fetch(`${api.defaults.baseURL}/chat`, {
-            method : "POST",
+            method: "POST",
             headers,
-            body   : JSON.stringify(body),
+            body: JSON.stringify(body),
           });
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
 
-          if (!resp.ok) {
-            const errTxt = await resp.text();
-            throw new Error(`HTTP ${resp.status}: ${errTxt}`);
-          }
+          const ctype = resp.headers.get("content-type") || "";
 
-          const ctype = resp.headers.get("content-type") ?? "";
-
-          /* --- 4A. STREAM (SSE) --- */
+          // 3A) STREAMING SSE → solo UI
           if (ctype.startsWith("text/event-stream")) {
-            const reader  = resp.body!.getReader();
+            const reader = resp.body!.getReader();
             const decoder = new TextDecoder();
-            let   buffer  = "";
+            let buffer = "";
 
             while (true) {
               const { value, done } = await reader.read();
               if (done) break;
-
               buffer += decoder.decode(value, { stream: true });
-              const chunks = buffer.split("\n\n");
-              buffer = chunks.pop()!;
 
-              chunks.forEach((chunk) => {
-                if (!chunk.startsWith("data:")) return;
+              const parts = buffer.split("\n\n");
+              buffer = parts.pop()!; // último trozo incompleto
+
+              for (const chunk of parts) {
+                if (!chunk.startsWith("data:")) continue;
                 const delta = chunk.slice(5);
-                patchBot(delta);
-              });
+                // actualiza solo UI
+                set((s) => {
+                  const convs = [...s.conversations];
+                  const c = convs[idx];
+                  convs[idx] = {
+                    ...c,
+                    messages: c.messages.map((m) =>
+                      m.id === botPlaceholderId
+                        ? { ...m, content: m.content + delta }
+                        : m
+                    ),
+                  };
+                  return { conversations: convs };
+                });
+              }
             }
           }
-          /* --- 4B. JSON normal --- */
+          // 3B) JSON normal → UI
           else if (ctype.includes("application/json")) {
-            const json: { answer?: string; error?: string } = await resp.json();
-            patchBot(json.answer ?? json.error ?? "[sin respuesta]", true);
+            const json = await resp.json();
+            const answer = json.answer ?? json.error ?? "[sin respuesta]";
+            set((s) => {
+              const convs = [...s.conversations];
+              const c = convs[idx];
+              convs[idx] = {
+                ...c,
+                messages: c.messages.map((m) =>
+                  m.id === botPlaceholderId ? { ...m, content: answer } : m
+                ),
+              };
+              return { conversations: convs };
+            });
           }
-          /* --- 4C. Texto plano u otros --- */
+          // 3C) Texto plano
           else {
             const txt = await resp.text();
-            patchBot(txt.trim() || "[sin respuesta]", true);
+            const answer = txt.trim() || "[sin respuesta]";
+            set((s) => {
+              const convs = [...s.conversations];
+              const c = convs[idx];
+              convs[idx] = {
+                ...c,
+                messages: c.messages.map((m) =>
+                  m.id === botPlaceholderId ? { ...m, content: answer } : m
+                ),
+              };
+              return { conversations: convs };
+            });
+          }
+
+          // 4️⃣ Al final, guardamos TODO el array en Firestore
+          const user = auth.currentUser as User | null;
+          if (user) {
+            const cid = currentId;
+            const ref = doc(db, "users", user.uid, "chats", cid);
+            await updateDoc(ref, {
+              messages: get().conversations[idx].messages,
+              title: get().conversations[idx].title,
+              updatedAt: serverTimestamp(),
+            }).catch(() => {});
           }
         } catch (err) {
-          console.error("✖ sendMessage", err);
-          patchBot("Lo siento, ocurrió un error al procesar tu solicitud.", true);
+          console.error("sendMessage error:", err);
+          // En caso de fallo, muestra mensaje de error en UI
+          set((s) => {
+            const convs = [...s.conversations];
+            const c = convs[idx];
+            convs[idx] = {
+              ...c,
+              messages: c.messages.map((m) =>
+                m.id === botPlaceholderId
+                  ? {
+                      ...m,
+                      content:
+                        "Lo siento, ocurrió un error al procesar tu solicitud.",
+                    }
+                  : m
+              ),
+            };
+            return { conversations: convs };
+          });
         } finally {
           set({ loading: false });
         }
-
-        /* helper local para inyectar contenido al mensaje del bot */
-        function patchBot(delta: string, end = false) {
-          set((s) => {
-            const cIdx = s.conversations.findIndex((c) => c.id === currentId);
-            if (cIdx === -1) return s;
-            const msgs = s.conversations[cIdx].messages.map((m) =>
-              m.id === botId
-                ? { ...m, content: end ? delta : m.content + delta }
-                : m,
-            );
-            const list = [...s.conversations];
-            list[cIdx] = { ...s.conversations[cIdx], messages: msgs };
-            return { conversations: list };
-          });
-        }
       },
 
-      /* ── borrar chat ── */
-      async deleteChat(id) {
-        const conv = get().conversations.find((c) => c.id === id);
-        if (!conv) return;
 
+      /** 4) Borrar conversación: backend + Firestore + UI */
+      async deleteChat(id: string) {
+        // 4.1) Backend
+        const conv = get().conversations.find((c) => c.id === id);
+        if (conv) {
+          try { await api.delete(`/chat/${conv.chatId}`); } catch {}
+        }
+
+        // 4.2) Firestore
+        const user = auth.currentUser as User | null;
+        if (user) {
+          await deleteDoc(doc(db, "users", user.uid, "chats", id)).catch(
+            () => void 0
+          );
+        }
+
+        // 4.3) UI local
         set((s) => ({
           conversations: s.conversations.filter((c) => c.id !== id),
-          currentId    : s.currentId === id ? null : s.currentId,
+          currentId: s.currentId === id ? null : s.currentId,
         }));
-
-        try { await api.delete(`/chat/${conv.chatId}`); }
-        catch { /* silencio */ }
       },
 
-      /* ── seleccionar/deseleccionar archivo ── */
-      toggleFile(id) {
-        set((s) =>
-          s.selectedFiles.includes(id)
-            ? { selectedFiles: s.selectedFiles.filter((x) => x !== id) }
-            : { selectedFiles: [...s.selectedFiles, id] },
-        );
+      /** 5) Toggle archivos seleccionados */
+      toggleFile(id: string) {
+        set((s) => ({
+          selectedFiles: s.selectedFiles.includes(id)
+            ? s.selectedFiles.filter((x) => x !== id)
+            : [...s.selectedFiles, id],
+        }));
       },
     }),
-    { name: "chat-storage", storage: createJSONStorage(() => localStorage) },
-  ),
+    {
+      name: "chat-storage",
+      storage: createJSONStorage(() => localStorage),
+      // Sólo UI mínima: el resto vive en Firestore
+      partialize: (s) => ({
+        currentId: s.currentId,
+        selectedFiles: s.selectedFiles,
+      }),
+    }
+  )
 );
+
+/** 6) Carga inicial desde Firestore al autenticarse */
+onAuthStateChanged(auth, async (user: User | null) => {
+  if (!user) {
+    useChatSlice.setState({ conversations: [], currentId: null });
+    return;
+  }
+
+  const snap = await getDocs(
+    query(
+      collection(db, "users", user.uid, "chats"),
+      orderBy("updatedAt", "desc")
+    )
+  );
+
+  const convs: Conversation[] = snap.docs.map((d) => ({
+    id: d.id,
+    chatId: d.data().chatId,
+    title: d.data().title,
+    messages: (d.data().messages ?? []) as Message[],
+  }));
+
+  useChatSlice.setState({
+    conversations: convs,
+    currentId: convs[0]?.id ?? null,
+  });
+});
