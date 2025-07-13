@@ -208,31 +208,40 @@ export default function HistorySidebar({ mobileOpen = false, onClose }: Props) {
       </div>
 
       {/* footer */}
-      <div className="hsb-footer">
-        <button
-          className="hsb-new"
-          onClick={() => !hasEmpty && newChat()}
-          disabled={hasEmpty}
-          title={
-            hasEmpty
-              ? "Ya existe un chat nuevo sin mensajes"
-              : undefined
-          }
-        >
-          <Plus size={14} />
-          {!collapsed && <span>Nuevo chat</span>}
-        </button>
+<div className="hsb-footer">
+  <button
+    className="hsb-new"
+    onClick={() => {
+      if (hasEmpty) {
+        /* Selecciona el chat vac ío existente */
+        const empty = conversations.find((c) => c.messages.length === 0);
+        if (empty) selectChat(empty.id);
+      } else {
+        /* Crea uno nuevo */
+        newChat();
+      }
+    }}
+    title={
+      hasEmpty
+        ? "Ya existe un chat nuevo sin mensajes. Haz clic para abrirlo."
+        : "Crear nuevo chat"
+    }
+  >
+    <Plus size={14} />
+    {!collapsed && <span>Nuevo chat</span>}
+  </button>
 
-        <button
-          className="hsb-new"
-          style={{ background: "var(--gray-100)", color: "var(--gray-500)" }}
-          onClick={logout}
-          title="Cerrar sesión"
-        >
-          <LogOut size={14} />
-          {!collapsed && <span>Salir</span>}
-        </button>
-      </div>
+  <button
+    className="hsb-new"
+    style={{ background: "var(--gray-100)", color: "var(--gray-500)" }}
+    onClick={logout}
+    title="Cerrar sesión"
+  >
+    <LogOut size={14} />
+    {!collapsed && <span>Salir</span>}
+  </button>
+</div>
+
     </aside>
   );
 }
