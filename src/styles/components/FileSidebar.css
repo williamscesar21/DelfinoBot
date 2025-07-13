@@ -1,33 +1,68 @@
-/* FileSidebar.css */
-
-.file-sidebar {
-  width: 256px;
-  background: #fff;
-  border-left: 1px solid var(--gray-200);
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  transition: width 0.3s ease;
+/* ---------- BASE (común) ---------- */
+.file-sidebar{
+  width:256px;
+  background:#fff;
+  border-left:1px solid var(--gray-200);
+  display:flex;flex-direction:column;
+  position:relative;           /* desktop */
+  transition:width .3s ease , transform .3s ease;
 }
 
-.file-sidebar-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--gray-800);
-  margin-bottom: 16px;
-  text-align: center;
+/* ---------- DESKTOP ---------- */
+@media (min-width:768px){
+  .file-sidebar{
+    position:relative;   /* dentro del layout */
+    transform:none;
+  }
+  .file-sidebar.collapsed{
+    width:4vw;           /* ≈ 50 px */
+    min-width:48px;
+  }
+
+  /* Botón toggle */
+  .file-collapse-btn{
+    position:absolute;
+    top:16px;
+    left:-12px;          /* sobresale hacia el contenido */
+    width:24px;height:24px;
+    border:1px solid var(--gray-200);
+    border-radius:50%;
+    background:#fff;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    box-shadow:0 1px 2px rgba(0,0,0,.04);
+    z-index:2;
+  }
 }
 
+/* ---------- MÓVIL (drawer) ---------- */
+@media (max-width:767px){
+  .file-sidebar{
+    position:fixed;
+    top:0;right:0;height:100dvh;
+    transform:translateX(100%);
+    z-index:999;
+  }
+  .file-sidebar.open{ transform:translateX(0); }
+  .file-close-btn{
+    position:absolute;top:16px;left:16px;
+    width:28px;height:28px;border:none;border-radius:50%;
+    background:var(--gray-100);display:flex;align-items:center;justify-content:center;
+    cursor:pointer;transition:background .2s;z-index:1000;
+  }
+  .file-close-btn:hover{background:var(--gray-200);}
+}
+
+/* ---------- CONTENIDO ---------- */
+.file-sidebar-title{
+  font-size:20px;font-weight:600;color:var(--gray-800);
+  margin:16px auto 12px;
+}
 .file-sidebar-loading,
-.file-sidebar-error {
-  font-size: 14px;
-  color: var(--gray-500);
-  text-align: center;
-  margin-top: 20px;
+.file-sidebar-error{
+  font-size:14px;color:var(--gray-500);text-align:center;margin-top:20px;
 }
-
-.file-sidebar-files {
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px 0;
+.file-sidebar-files{flex:1;overflow-y:auto;padding:8px 0;}
+.file-sidebar-hint{
+  font-size:13px;color:var(--gray-500);margin:12px auto 24px;max-width:220px;text-align:center;
 }

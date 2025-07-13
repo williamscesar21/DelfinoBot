@@ -1,5 +1,4 @@
-/* Font & reset */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&display=swap');
+
 * { box-sizing: border-box; }
 
 /* Hide scrollbars for all elements */
@@ -11,7 +10,6 @@
   display: none; /* For Chrome, Safari, and Opera */
 }
 
-body { font-family: 'Poppins', sans-serif; }
 
 /* --- Variables --- */
 :root {
@@ -37,7 +35,7 @@ body { font-family: 'Poppins', sans-serif; }
   transition: width 0.3s ease;
 }
 .hsb-sidebar.collapsed {
-  width: 80px !important;
+  width: 4dvw !important;
   overflow: visible;   
 }
 
@@ -56,7 +54,7 @@ body { font-family: 'Poppins', sans-serif; }
   justify-content: center;
   cursor: pointer;
   box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-  z-index: 1000;
+  z-index: 1;
 }
 
 /* inner wrapper */
@@ -158,18 +156,17 @@ body { font-family: 'Poppins', sans-serif; }
   right: 8px; top: 8px;
   width: 20px; height: 20px;
   border: none; border-radius: 50%;
-  background: transparent;
+  background: var(--gray-200); /* Solid background */
   opacity: 0;
   display:flex; align-items:center; justify-content:center;
   cursor:pointer;
   transition: opacity .15s;
 }
 .hsb-chat-item:hover .hsb-trash { opacity: 1; }
-.hsb-trash:hover { background: var(--gray-200); }
 
 /* empty */
 .hsb-empty {
-  padding: 24px 12px; text-align:center; border-radius:8px;
+  padding: 5px; text-align:center; border-radius:8px;
   background: linear-gradient(135deg,#f5f7fa 0%,#e4e7eb 100%);
   margin-top: 16px;
 }
@@ -191,7 +188,6 @@ body { font-family: 'Poppins', sans-serif; }
 }
 .hsb-new:hover { background: var(--indigo-100); }
 
-
 /* Altura adaptativa en móviles: usa viewport dinámico */
 @media (max-width: 768px) {
   .hsb-sidebar.mobile {
@@ -208,6 +204,7 @@ body { font-family: 'Poppins', sans-serif; }
   display: flex;
   gap: 8px;
   border-top: 1px solid var(--gray-200);
+  overflow: hidden;
 }
 
 /* Asegura que los elementos interactivos no hereden eventos de click */
@@ -248,3 +245,4 @@ body { font-family: 'Poppins', sans-serif; }
 .hsb-chat-item:active {
   background-color: rgba(0,0,0,0.05);
 }
+

@@ -1,7 +1,3 @@
-/* src/components/HistorySidebar.tsx
-   – Drawer + desktop sidebar con footer sticky y soporte colapsable */
-
-import { useState, useMemo } from "react";
 import {
   ChevronLeft,
   ChevronRight,
@@ -13,6 +9,8 @@ import {
   X,
 } from "lucide-react";
 import { format, isToday, isYesterday } from "date-fns";
+import { useState, useMemo, useEffect } from "react";
+
 import { useChatSlice } from "../store/chatSlice";
 import { useAuthSlice } from "../store/authSlice";
 import "../styles/components/HistorySidebar.css";
@@ -20,20 +18,26 @@ import "../styles/components/HistorySidebar.css";
 import type { Conversation, Message } from "../types/chat";
 
 type Props = {
-  /** Drawer en pantallas < 768 px  */
-  mobile?: boolean;
-  /** Estado abierto (solo móvil)  */
-  open?: boolean;
-  /** Callback al cerrar (tap en ❌) */
+  /** Drawer state when viewport < 768 px */
+  mobileOpen?: boolean;
+  /** Fired when the sidebar must close (tap on ❌ or resize) */
   onClose?: () => void;
 };
 
-export default function HistorySidebar({
-  mobile = false,
-  open = false,
-  onClose,
-}: Props) {
-  /* ---------------- estado global ---------------- */
+export default function HistorySidebar({ mobileOpen = false, onClose }: Props) {
+  /* ---------- responsive: detect viewport ---------- */
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  useEffect(() => {
+    const handle = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (!mobile) onClose?.(); // auto-close when back to desktop
+    };
+    window.addEventListener("resize", handle);
+    return () => window.removeEventListener("resize", handle);
+  }, [onClose]);
+
+  /* ---------- global stores ---------- */
   const {
     conversations,
     currentId,
@@ -43,70 +47,85 @@ export default function HistorySidebar({
   } = useChatSlice();
   const { logout } = useAuthSlice();
 
-  /* ---------------- estado local ---------------- */
-  const [collapsed, setCollapsed] = useState(false);
+  /* ---------- local state ---------- */
+  const [collapsed, setCollapsed] = useState(false); // desktop only
   const [query, setQuery] = useState("");
 
-  /* ---------------- filtrar y agrupar ---------------- */
-  const filtered = useMemo<Conversation[]>(() => {
+  /* ---------- derived ---------- */
+  const filtered = useMemo(() => {
     if (!query.trim()) return conversations;
     const q = query.toLowerCase();
     return conversations.filter((c) => c.title.toLowerCase().includes(q));
   }, [conversations, query]);
 
-  const grouped = useMemo<[string, Conversation[]][]>(() => {
-    const map = new Map<string, Conversation[]>();
-    filtered.forEach((c) => {
-      const last = c.messages[c.messages.length - 1];
-      const ts =
-        last && typeof last.timestamp === "number" && !isNaN(last.timestamp)
-          ? new Date(last.timestamp)
-          : new Date();
+  /* detect if there is already an empty chat */
+  const hasEmpty = useMemo(
+    () => conversations.some((c) => c.messages.length === 0),
+    [conversations]
+  );
 
+  const grouped: [string, Conversation[]][] = useMemo(() => {
+    const map = new Map<string, Conversation[]>();
+
+    const sorted = [...filtered].sort((a, b) => {
+      const tsA = a.messages.length ? a.messages[a.messages.length - 1].timestamp : 0;
+      const tsB = b.messages.length ? b.messages[b.messages.length - 1].timestamp : 0;
+      return tsB - tsA;
+    });
+
+    sorted.forEach((c) => {
+      const ts = new Date(
+        c.messages.length ? c.messages[c.messages.length - 1].timestamp : Date.now()
+      );
       let label = format(ts, "MMM dd");
       if (isToday(ts)) label = "Today";
       else if (isYesterday(ts)) label = "Yesterday";
-
       (map.get(label) ?? map.set(label, []).get(label)!).push(c);
     });
-    return Array.from(map.entries());
+
+    return Array.from(map.entries()).sort((a, b) => {
+      const toDate = (l: string) =>
+        l === "Today"
+          ? new Date()
+          : l === "Yesterday"
+          ? new Date(Date.now() - 86_400_000)
+          : new Date(l);
+      return toDate(b[0]).getTime() - toDate(a[0]).getTime();
+    });
   }, [filtered]);
 
-  const getLast = (msgs: Message[]) => msgs[msgs.length - 1];
+  const getLast = (arr: Message[]) => arr[arr.length - 1];
 
-  /* ---------------- render ---------------- */
+  /* ---------- classes ---------- */
+  const cls =
+    "hsb-sidebar" +
+    (isMobile ? " mobile" : "") +
+    (isMobile && mobileOpen ? " open" : "") +
+    (!isMobile && collapsed ? " collapsed" : "");
+
+  /* ==================== render ==================== */
   return (
-    <aside
-      className={`hsb-sidebar ${mobile ? "mobile" : ""} ${
-        open ? "open" : ""
-      } ${collapsed && !mobile ? "collapsed" : ""}`}
-    >
-      {/* ---- Cerrar (solo móvil) ---- */}
-      {mobile && (
-        <button
-          className="hsb-close-btn"
-          onClick={(e) => {
-            e.stopPropagation();
-            onClose?.();
-          }}
-        >
+    <aside className={cls}>
+      {/* close (mobile) */}
+      {isMobile && mobileOpen && (
+        <button className="hsb-close-btn" onClick={onClose}>
           <X size={18} />
         </button>
       )}
 
-      {/* ---- Colapsar / expandir (solo desktop) ---- */}
-      {!mobile && (
+      {/* collapse/expand (desktop) */}
+      {!isMobile && (
         <button
           className="hsb-collapse-btn"
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={() => setCollapsed((c) => !c)}
         >
           {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
         </button>
       )}
 
-      {/* ---- Contenido scrollable ---- */}
+      {/* scrollable content */}
       <div className="hsb-content">
-        {/* Header */}
+        {/* header */}
         <header className="hsb-header">
           <div className="hsb-brand">
             <span className="hsb-logo">
@@ -116,26 +135,27 @@ export default function HistorySidebar({
           </div>
         </header>
 
-        {/* Buscador */}
+        {/* search */}
         {!collapsed && (
           <div className="hsb-search">
             <Search size={12} className="hsb-search-ico" />
             <input
-              placeholder="Search chats…"
+              placeholder="Buscar conversaciones…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
           </div>
         )}
 
-        {/* Lista de chats */}
+        {/* chat list */}
         <div className="hsb-list">
           {grouped.length === 0 ? (
-            <div className="hsb-empty">
-              <MessageCircle size={20} />
-              <h4>No chats yet</h4>
-              <p>Start a conversation to see it here</p>
-            </div>
+            !collapsed && (
+              <div className="hsb-empty">
+                <h4>Sin conversaciones</h4>
+                <p>Inicia una conversación para comenzar a chatear.</p>
+              </div>
+            )
           ) : (
             grouped.map(([label, chats]) => (
               <div key={label}>
@@ -146,10 +166,13 @@ export default function HistorySidebar({
                   return (
                     <div
                       key={c.id}
-                      className={`hsb-chat-item ${
-                        c.id === currentId ? "active" : ""
-                      }`}
-                      onClick={() => selectChat(c.id)}
+                      className={
+                        "hsb-chat-item" + (c.id === currentId ? " active" : "")
+                      }
+                      onClick={() => {
+                        selectChat(c.id);
+                        if (isMobile) onClose?.();
+                      }}
                     >
                       <div className="hsb-chat-line">
                         <span className="hsb-chat-title">
@@ -184,11 +207,20 @@ export default function HistorySidebar({
         </div>
       </div>
 
-      {/* ---- Footer sticky (siempre visible) ---- */}
+      {/* footer */}
       <div className="hsb-footer">
-        <button className="hsb-new" onClick={newChat}>
+        <button
+          className="hsb-new"
+          onClick={() => !hasEmpty && newChat()}
+          disabled={hasEmpty}
+          title={
+            hasEmpty
+              ? "Ya existe un chat nuevo sin mensajes"
+              : undefined
+          }
+        >
           <Plus size={14} />
-          {!collapsed && <span>New Chat</span>}
+          {!collapsed && <span>Nuevo chat</span>}
         </button>
 
         <button
@@ -198,7 +230,7 @@ export default function HistorySidebar({
           title="Cerrar sesión"
         >
           <LogOut size={14} />
-          {!collapsed && <span>Logout</span>}
+          {!collapsed && <span>Salir</span>}
         </button>
       </div>
     </aside>

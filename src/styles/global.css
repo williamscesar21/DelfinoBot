@@ -1,4 +1,5 @@
 @import "./variables.css";
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
 
 /* reset ---------------------------------------------------- */
 *,
@@ -8,7 +9,7 @@
 html, body, #root {
   height: 100%;
   margin: 0;
-  font-family: "Poppins", sans-serif;
+  font-family: "Poppins";
   background: var(--bg-main);
   color: var(--text-primary);
 }
@@ -27,6 +28,8 @@ a:hover { color: var(--accent-hover); }
   overflow-y: auto;
   display: flex;
   flex-direction: column;  /* ← normal */
-  padding: 1.5rem;
+  padding-top: 1rem;
+  padding-right: 4rem;
+  padding-left: 4rem;
   gap: 1rem;
 }

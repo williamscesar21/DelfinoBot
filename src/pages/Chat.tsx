@@ -2,27 +2,28 @@ import { useEffect, useRef, useState } from "react";
 import { Menu, Folder, Settings } from "lucide-react";
 
 import { useChatSlice } from "../store/chatSlice";
-import MessageBubble from "../components/MessageBubble";
-import HistorySidebar from "../components/HistorySidebar";
-import FileSidebar from "../components/FileSidebar";
-import ChatInput from "../components/ChatInput";
-import "../styles/components/aiSettingsPanel.css";
-import AiSettingsPanel from "../components/aiSettingsPanel";
+// import { useAuthSlice } from "../store/authSlice";
+import MessageBubble    from "../components/MessageBubble";
+import HistorySidebar   from "../components/HistorySidebar";
+import FileSidebar      from "../components/FileSidebar";
+import ChatInput        from "../components/ChatInput";
+import AiSettingsPanel  from "../components/aiSettingsPanel";
 
-// CSS global + panel de ajustes
+import "../styles/components/aiSettingsPanel.css";
 import "../styles/components/Composer.css";
 import "../styles/components/AppLayout.css";
 
 export default function Chat() {
-  /* ---------------- Estado global ---------------- */
+  /* ---------- estado global ---------- */
   const { conversations, currentId, sendMessage, loading } = useChatSlice();
+  // const { logout } = useAuthSlice();
 
-  /* ---------------- UI local ---------------- */
+  /* ---------- estado UI ---------- */
   const [showHistory,  setShowHistory]  = useState(false);
   const [showFiles,    setShowFiles]    = useState(false);
   const [showSettings, setShowSettings] = useState(false);
 
-  /* ---------------- Scroll al final ---------------- */
+  /* ---------- scroll automático ---------- */
   const bottomRef  = useRef<HTMLDivElement>(null);
   const activeConv = conversations.find((c) => c.id === currentId);
   const messages   = activeConv?.messages ?? [];
@@ -31,25 +32,23 @@ export default function Chat() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  /* ---------------- Enviar ---------------- */
+  /* ---------- enviar mensaje ---------- */
   const handleSend = async (text: string) => {
     await sendMessage(text);
   };
 
-  /* ========================================================= */
+  /* ============================================================= */
   return (
     <div className="app-layout">
-      {/* ---------- SIDEBARS (permanentes para mantener estado) ---------- */}
+      {/* ---------- SIDEBAR HISTÓRICO ---------- */}
       <HistorySidebar
-        mobile
-        open={showHistory}
+        mobileOpen={showHistory}          /* ← nuevo prop */
         onClose={() => setShowHistory(false)}
       />
-      
 
       {/* ---------- PANEL CENTRAL ---------- */}
       <div className="main-panel">
-        {/* Barra superior (visible en móviles) */}
+        {/* Nav superior (solo móvil) */}
         <header className="chat-mobile-nav">
           <button onClick={() => setShowHistory(true)} className="nav-btn">
             <Menu size={20} />
@@ -67,41 +66,34 @@ export default function Chat() {
           </div>
         </header>
 
-        {/* Lista de mensajes */}
+        {/* Mensajes */}
         <section className="messages">
           {messages.map((m) => (
             <MessageBubble key={m.id} msg={m} />
           ))}
-          {/* Puedes volver a habilitar el Spinner si lo necesitas */}
           <div ref={bottomRef} />
         </section>
 
         <ChatInput disabled={loading} onSend={handleSend} />
       </div>
 
-      {/* ---------- MODAL AJUSTES ---------- */}
+      {/* ---------- PANEL AJUSTES ---------- */}
       {showSettings && (
         <>
-          {/* Overlay oscuro solo para el modal */}
-          <div
-            className="app-overlay"
-            onClick={() => setShowSettings(false)}
-          />
-
-          {/* Contenedor centrado */}
+          <div className="app-overlay" onClick={() => setShowSettings(false)} />
           <div className="modal-wrapper">
             <AiSettingsPanel onClose={() => setShowSettings(false)} />
           </div>
         </>
       )}
 
+      {/* ---------- FILE SIDEBAR (sin cambios) ---------- */}
       <FileSidebar
-        mobile
-        open={showFiles}
+        mobileOpen={showFiles}
         onClose={() => setShowFiles(false)}
       />
 
-      {/* ---------- BOTÓN FLOTANTE DE AJUSTES (siempre visible) ---------- */}
+      {/* ---------- FAB ajustes ---------- */}
       <div
         className="settings-fab"
         onClick={() => setShowSettings(true)}
@@ -110,7 +102,7 @@ export default function Chat() {
         <Settings size={20} />
       </div>
 
-      {/* ---------- Overlay para sidebars ---------- */}
+      {/* ---------- OVERLAY para sidebars móviles ---------- */}
       {(showHistory || showFiles) && (
         <div
           className="app-overlay"

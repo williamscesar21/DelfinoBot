@@ -1,5 +1,6 @@
-import { FormEvent, useState, useEffect, KeyboardEvent } from "react";
+import { FormEvent, useState, KeyboardEvent } from "react";
 import { useChatSlice } from "../store/chatSlice";
+import { useAuthSlice } from "../store/authSlice";
 import "../styles/components/ChatInput.css";
 
 type Props = {
@@ -8,25 +9,26 @@ type Props = {
 };
 
 export default function ChatInput({ disabled, onSend }: Props) {
+  /* ----- estado local mensaje ----- */
   const [text, setText] = useState("");
-  const { conversations, currentId } = useChatSlice();
 
-  const active = conversations.find((c) => c.id === currentId);
+  /* ----- chat global ----- */
+  const { conversations, currentId } = useChatSlice();
+  const active  = conversations.find((c) => c.id === currentId);
   const isEmpty = !active || active.messages.length === 0;
 
-  const [username, setUsername] = useState<string | null>(null);
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem("auth-storage");
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        setUsername(parsed?.state?.user ?? null);
-      }
-    } catch {
-      /* ignore */
-    }
-  }, []);
+  /* ----- usuario autenticado (Zustand) ----- */
+  const firebaseUser = useAuthSlice((s) => s.firebaseUser);
+  const basicUser    = useAuthSlice((s) => s.basicUser);
 
+  /* Nombre a mostrar */
+  const username =
+    firebaseUser?.displayName ||
+    firebaseUser?.email?.split("@")[0] ||
+    basicUser ||
+    null;
+
+  /* ----- helpers envío ----- */
   const send = (msg: string) => {
     onSend(msg);
     setText("");
@@ -35,8 +37,7 @@ export default function ChatInput({ disabled, onSend }: Props) {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const msg = text.trim();
-    if (!msg) return;
-    send(msg);
+    if (msg) send(msg);
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -75,6 +76,7 @@ export default function ChatInput({ disabled, onSend }: Props) {
           Enviar
         </button>
       </form>
+      <span style={{ color: "gray", fontSize: "0.8rem" }}>DelfinoBot puede cometer errores, verificar información importante.</span>
     </div>
   );
 }
