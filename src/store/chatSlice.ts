@@ -107,10 +107,12 @@ export const useChatSlice = create<ChatState>()(
           "Content-Type": "application/json",
           Accept        : "text/event-stream,application/json",
         };
-        const { user, pass } = getAuthCreds();
-        if (user && pass) {
-          headers.Authorization = "Basic " + btoa(`${user}:${pass}`);
+        const { basicUser, basicPass } = getAuthCreds();
+
+        if (basicUser && basicPass) {
+          headers.Authorization = "Basic " + btoa(`${basicUser}:${basicPass}`);
         }
+
 
         /* 4️⃣ fetch */
         try {
