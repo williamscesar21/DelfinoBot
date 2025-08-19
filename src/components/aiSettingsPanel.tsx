@@ -1,7 +1,7 @@
 import { useState } from "react";
-// import { toast } from "react-toastify";          // npm i react-toastify
+import { toast } from "react-toastify";          // npm i react-toastify
 import { useAiSettings } from "../store/aiSettings";
-// import { api } from "../api/axios";
+import { api } from "../api/axios";
 import MarkdownEditor from "./MarkdownEditor";
 import "../styles/components/aiSettingsPanel.css";
 
@@ -23,7 +23,7 @@ Siempre que pidan fechas de las SEASON en el Modelo Tarifario PANAMA 2025 V4 las
 const DEFAULT_MAX_CHARS   = 10_000;
 const DEFAULT_MAX_HISTORY = 8;
 
-export default function AiSettingsPanel({ }: AiSettingsPanelProps) {
+export default function AiSettingsPanel({ onClose }: AiSettingsPanelProps) {
   /* ---------- store global ---------- */
   const {
     systemPrompt,
@@ -36,8 +36,8 @@ export default function AiSettingsPanel({ }: AiSettingsPanelProps) {
 
   /* ---------- estado local ---------- */
   const [promptDraft, setPromptDraft] = useState(systemPrompt);
-  // const [isReindexing, setIsReindexing] = useState(false);
-  // console.log(isReindexing);
+  const [isReindexing, setIsReindexing] = useState(false);
+
   /* ---------- acciones ---------- */
   const handleSavePrompt = () => setPrompt(promptDraft.trim());
 
@@ -48,18 +48,18 @@ export default function AiSettingsPanel({ }: AiSettingsPanelProps) {
     setPromptDraft(DEFAULT_PROMPT);
   };
 
-  // const handleReindex = async () => {
-  //   setIsReindexing(true);
-  //   try {
-  //     await api.post("/files/reindex");      // ← nueva ruta del backend
-  //     toast.success("Índice actualizado correctamente");
-  //   } catch (err) {
-  //     console.error(err);
-  //     toast.error("No se pudo actualizar el índice");
-  //   } finally {
-  //     setIsReindexing(false);
-  //   }
-  // };
+  const handleReindex = async () => {
+    setIsReindexing(true);
+    try {
+      await api.post("/files/reindex");      // ← nueva ruta del backend
+      toast.success("Índice actualizado correctamente");
+    } catch (err) {
+      console.error(err);
+      toast.error("No se pudo actualizar el índice");
+    } finally {
+      setIsReindexing(false);
+    }
+  };
 
   /* ---------- UI ---------- */
   return (
@@ -86,13 +86,13 @@ export default function AiSettingsPanel({ }: AiSettingsPanelProps) {
             Restablecer valores
           </button>
 
-          {/* <button
+          <button
             className="ais-btn ais-btn--warning"
             onClick={handleReindex}
             disabled={isReindexing}
           >
             {isReindexing ? "Actualizando…" : "Actualización de archivos"}
-          </button> */}
+          </button>
         </div>
       </section>
 
@@ -131,7 +131,7 @@ export default function AiSettingsPanel({ }: AiSettingsPanelProps) {
         />
       </section>
 
-      {/* {onClose && (
+      {onClose && (
         <div className="ais-actions">
           <button
             className="ais-btn ais-btn--secondary"
@@ -140,7 +140,7 @@ export default function AiSettingsPanel({ }: AiSettingsPanelProps) {
             Cerrar
           </button>
         </div>
-      )} */}
+      )}
     </div>
   );
 }
